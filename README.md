@@ -45,6 +45,59 @@ This project develops a prototype system with three interconnected modules to su
 - Week 11: Final presentation
 - Week 12: Final report
 
+### Getting Started
+
+#### Prerequisites
+
+- Python 3.12 or higher
+- [UV package manager](https://docs.astral.sh/uv/)
+- OpenAI API key
+
+#### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd AI4ED-turing-project
+```
+
+2. Install dependencies using UV:
+```bash
+uv sync
+```
+
+3. Set up environment variables:
+Create a `.env` file in the project root (get from folder in google drive):
+```bash
+OPENAI_API_KEY=your_api_key_here
+```
+
+#### Running the Application
+
+To run the basic multi-agent system example:
+
+```bash
+uv run python -m bin.MultiAgentSystem.app
+```
+
+This will run a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
+
+#### Project Structure
+
+```
+.
+├── bin/
+│   └── MultiAgentSystem/
+│       ├── agents.py          # Agent persona definitions
+│       ├── llm_connector.py   # OpenAI/LangChain integration
+│       ├── ochestrator.py     # LangGraph multi-agent orchestration
+│       ├── prompts.py         # Prompt building utilities
+│       └── app.py             # Example application
+├── main.py                    # Project entry point
+├── pyproject.toml             # Project dependencies and metadata
+└── readme.md                  # This file
+```
+
 ### Resources
 
 - **Module:** COM4520 Turing Research Project
