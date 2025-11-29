@@ -6,19 +6,19 @@ load_dotenv()
 
 os.environ.get("OPENAI_API_KEY")
 
-def chat(system_prompt: str, user_input: str):
+def chat(system_prompt: str, user_input: str, model_name = "gpt-4.1-mini", tools: list = None):
 
     # Initialize the LLM model
-    model = ChatOpenAI(
-     model="gpt-4.1-mini",
+    llm = ChatOpenAI(
+     model=model_name,
      temperature=0.1,
      max_tokens=1000,
-     timeout=30
+     timeout=30,
     # ... (other params)
    )
    
    # Create the agent
-    agent = create_agent(model, system_prompt=system_prompt)
+    agent = create_agent(llm, tools=tools, system_prompt=system_prompt)
    
    # Print the system prompt
    #uncomment this if you want to see the system prompt
@@ -28,6 +28,7 @@ def chat(system_prompt: str, user_input: str):
     for chunk in agent.stream({
      "messages": [{"role": "user", "content": user_input}]
  }, stream_mode="values"):
+     print("Received chunk:", chunk)
      # Each chunk contains the full state at that point
      latest_message = chunk["messages"][-1]
      #uncomment this if you want to print the agent's last response or tool calls
