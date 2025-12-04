@@ -74,28 +74,60 @@ OPENAI_API_KEY=your_api_key_here
 
 #### Running the Application
 
-To run the basic multi-agent system example:
+You can choose between two user interfaces:
+
+**Option 1: Rich Console UI (Recommended)**
+
+Modern, interactive terminal interface with colored panels, spinners, and conversation history:
+
+```bash
+# Interactive mode (will prompt for subject)
+uv run python -m bin.RichUI.app
+
+# With subject specified
+uv run python -m bin.RichUI.app --subject "Social media and mental health"
+```
+
+Features:
+- Live conversation display with color-coded Rich panels
+- Typing indicators/spinners during LLM processing
+- Conversation history scrollback (last 5 turns)
+- Multi-line input support (use `>>>` to finish)
+- Commands: `/help`, `/clear`, `/quit`
+
+See `bin/RichUI/README.md` for detailed usage guide.
+
+**Option 2: Basic CLI**
+
+Simple command-line interface (original):
 
 ```bash
 uv run python -m bin.MultiAgentSystem.app
 ```
 
-This will run a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
+This runs a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
 
 #### Project Structure
 
 ```
 .
 ├── bin/
-│   └── MultiAgentSystem/
-│       ├── agents.py          # Agent persona definitions
-│       ├── llm_connector.py   # OpenAI/LangChain integration
-│       ├── ochestrator.py     # LangGraph multi-agent orchestration
-│       ├── prompts.py         # Prompt building utilities
-│       └── app.py             # Example application
-├── main.py                    # Project entry point
-├── pyproject.toml             # Project dependencies and metadata
-└── readme.md                  # This file
+│   ├── MultiAgentSystem/          # Core multi-agent system (backend)
+│   │   ├── agents.py              # Agent persona definitions
+│   │   ├── llm_connector.py       # OpenAI/LangChain integration
+│   │   ├── ochestrator.py         # LangGraph multi-agent orchestration
+│   │   ├── prompts.py             # Prompt building utilities
+│   │   └── app.py                 # Basic CLI application
+│   └── RichUI/                    # Rich Console UI (frontend)
+│       ├── console_ui.py          # Main UI orchestrator
+│       ├── conversation_manager.py # Message history tracking
+│       ├── input_handler.py       # Multi-line input handling
+│       ├── display_renderer.py    # Rich panels and formatting
+│       ├── app.py                 # Rich UI entry point
+│       └── README.md              # Rich UI documentation
+├── main.py                        # Project entry point
+├── pyproject.toml                 # Project dependencies and metadata
+└── readme.md                      # This file
 ```
 
 ### Resources
