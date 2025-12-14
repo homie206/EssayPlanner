@@ -13,8 +13,8 @@ def create_agent(system_prompt: str, model_name = "gpt-4.1-mini", tools: list = 
     llm = ChatOpenAI(
      model=model_name,
      temperature=0.1,
-     max_tokens=1000,
-     timeout=30,
+     max_tokens=10000,
+     timeout=300,
     # ... (other params)
    )
 
@@ -30,7 +30,7 @@ def chat(agent: object, user_input: str, thread_id: str) -> str:
         config={"configurable": {"thread_id": thread_id}},  # 👈 key change
         stream_mode="values",
     ):
-        print("Received chunk:", chunk)
+        #print("Received chunk:", chunk)
 
         # Each chunk contains the full state at that point
         latest_message = chunk["messages"][-1]

@@ -3,7 +3,7 @@ from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
 from .state_schema import State
 
-def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subject_specialist_agent) -> StateGraph[State]:
+def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subject_specialist_agent, critic_agent) -> StateGraph[State]:
     graph_builder = StateGraph(State)
     def strucuture_node(state: State):
         print(state["idea_generator_reply"])
@@ -31,13 +31,23 @@ def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subje
         )
         return {"subject_specialist_reply": reply}
     
+    def critic_node(state: State):
+        reply = chat(
+            critic_agent,      
+            "Ideas" + state["idea_board"] + "\n" + "Subject Specialist Ideas: " + state["subject_specialist_reply"],
+            thread_id=state["thread_id"],
+        )
+        return {"critic_reply": reply}
+    
     graph_builder.add_node("idea_generator", idea_node)
     graph_builder.add_node("idea_structurer", strucuture_node)
     graph_builder.add_node("subject_specialist", sub_specialist_node)
+    graph_builder.add_node("critic", critic_node)
     graph_builder.add_edge(START, "idea_generator")
     graph_builder.add_edge(START, "subject_specialist")
-    graph_builder.add_edge("subject_specialist", "idea_structurer")
-    graph_builder.add_edge("idea_generator", "idea_structurer")
+    graph_builder.add_edge("subject_specialist", "critic")
+    graph_builder.add_edge("idea_generator", "critic")
+    graph_builder.add_edge("critic", "idea_structurer")
     graph_builder.add_edge("idea_structurer", END)
     subgraph = graph_builder.compile(checkpointer=True)
     return subgraph

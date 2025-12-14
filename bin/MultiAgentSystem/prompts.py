@@ -12,7 +12,7 @@ def build_prompt_for_agent(
     base_prompt = persona.base_prompt
 
     subject = essay_subject or "the subject area"
-    level = "university"  # placeholder for now
+    level = "high-school"  # placeholder for now
 
     if "{subject}" in base_prompt or "{level}" in base_prompt:
         base_prompt = base_prompt.format(subject=subject, level=level)

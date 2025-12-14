@@ -12,6 +12,7 @@ def create_all_agents(state: State):
       2) idea_generator
       3) subject_specialist
       4) idea_structurer
+      5) critic
     """
 
     # Facilitator
@@ -36,9 +37,14 @@ def create_all_agents(state: State):
     structurer_prompt = build_prompt_for_agent("Idea_Structurer", state["subject"])
     idea_structurer_agent = create_agent(structurer_prompt)
 
+    #critic
+    critic_prompt = build_prompt_for_agent("Critic", state["subject"])
+    critic_agent = create_agent(critic_prompt, model_name="gpt-5")
+
     return (
         facilitator_agent,
         idea_generator_agent,
         subject_specialist_agent,
-        idea_structurer_agent
+        idea_structurer_agent,
+        critic_agent
     )
