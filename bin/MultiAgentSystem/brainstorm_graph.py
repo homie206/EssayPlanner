@@ -18,7 +18,7 @@ def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subje
     def idea_node(state: State):
         reply = chat(
             idea_generator_agent,      
-            state["user_message"],
+            state["user_message"] + "\n" + "Critic feedback: " + state["critic_reply"],
             thread_id=state["thread_id"],
         )
         return {"idea_generator_reply": reply}
@@ -26,7 +26,7 @@ def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subje
     def sub_specialist_node(state: State):
         reply = chat(
             subject_specialist_agent,      
-            state["user_message"],
+            state["user_message"] + "\n" + "The ideas that are generated: " + state["idea_generator_reply"],
             thread_id=state["thread_id"],
         )
         return {"subject_specialist_reply": reply}
@@ -44,9 +44,8 @@ def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subje
     graph_builder.add_node("subject_specialist", sub_specialist_node)
     graph_builder.add_node("critic", critic_node)
     graph_builder.add_edge(START, "idea_generator")
-    graph_builder.add_edge(START, "subject_specialist")
+    graph_builder.add_edge("idea_generator", "subject_specialist")
     graph_builder.add_edge("subject_specialist", "critic")
-    graph_builder.add_edge("idea_generator", "critic")
     graph_builder.add_edge("critic", "idea_structurer")
     graph_builder.add_edge("idea_structurer", END)
     subgraph = graph_builder.compile(checkpointer=True)

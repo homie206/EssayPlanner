@@ -75,7 +75,7 @@ def retrieve_knowledge(query: str) -> str:
     docs = retriever_relevant_docs(query)
     if not docs:
         return "I couldn't find any relevant documents for that topic."
-
+    #print("Retreival DOne")
     # Return a few chunks concatenated
     return "\n\n".join(doc.page_content for doc in docs)
 

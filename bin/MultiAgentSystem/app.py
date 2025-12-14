@@ -3,6 +3,37 @@ from .agents import create_all_agents
 from .state_schema import State
 import uuid 
 
+def print_turn_summary(next_state: dict):
+    sep = "-" * 80
+    big_sep = "=" * 80
+
+    print("\n" + big_sep)
+    print(" MULTI-AGENT TURN SUMMARY ".center(80, "="))
+    print(big_sep + "\n")
+
+    # Idea Generator
+    print("IDEA GENERATOR".center(80, "-"))
+    print(next_state["idea_generator_reply"], "\n")
+
+    # Subject Specialist
+    print("SUBJECT SPECIALIST".center(80, "-"))
+    print(next_state["subject_specialist_reply"], "\n")
+
+    # Critic
+    print("CRITIC".center(80, "-"))
+    print(next_state["critic_reply"], "\n")
+
+    # Idea Board
+    print("IDEA BOARD SO FAR".center(80, "-"))
+    print(next_state["idea_board"], "\n")
+
+    # Facilitator
+    print("FACILITATOR".center(80, "-"))
+    print(next_state["facilitator_reply"], "\n")
+
+    print(big_sep + "\n")
+
+
 if __name__ == "__main__":
     # Example usage
     # change the subject and user message as needed
@@ -30,11 +61,8 @@ if __name__ == "__main__":
     
     while True:
         next_state = multiagent_chat_once(mas, initial_state, initial_state["thread_id"])
-        print("Idea Generator says:", next_state["idea_generator_reply"])
-        print("Subject Specialist says:", next_state["subject_specialist_reply"])
-        print("critic says:", next_state["critic_reply"])
-        print("idea board so far:", next_state["idea_board"])
-        print("Facilitator says:", next_state["facilitator_reply"])
+        print_turn_summary(next_state)
+        initial_state = next_state
         user_message = input("Your turn (type 'exit' to quit): ")
         if user_message.lower() == 'exit':
             break
