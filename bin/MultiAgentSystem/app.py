@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # change the subject and user message as needed
 
     thread_id = str(uuid.uuid4())
-    subject = "mental health"
+    subject = "Climate Change"
     user_message = input("What would you like to write an essay about? ")
     initial_state: State = {
         "idea_board": "",

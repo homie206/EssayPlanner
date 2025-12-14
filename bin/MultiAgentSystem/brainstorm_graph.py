@@ -26,7 +26,7 @@ def build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subje
     def sub_specialist_node(state: State):
         reply = chat(
             subject_specialist_agent,      
-            state["user_message"] + "\n" + "The ideas that are generated: " + state["idea_generator_reply"],
+            state["user_message"] + "\n" + "The ideas that are generated: " + state["idea_generator_reply"] + "\n" + "Critic feedback: " + state["critic_reply"],
             thread_id=state["thread_id"],
         )
         return {"subject_specialist_reply": reply}
