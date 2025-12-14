@@ -1,51 +1,46 @@
-from typing import List
-from .llm_connector import  chat
-from .prompts import build_prompt_for_agent
-from typing_extensions import TypedDict
-from .tools import Tools
+from .state_schema import State
+from .llm_connector import chat
+from.brainstorm_graph import build_discussion_subgraph
 from langgraph.graph import START, END, StateGraph
+from langgraph.checkpoint.memory import InMemorySaver
 
-class State(TypedDict):
-    ideas: List[str]
-    structures: List[str]
-    subject: str
-    user_message: str # latest student message
-    facilitator_reply : str
-    idea_generator_reply: str
 
-def run_facilitator(state: State) -> str:
-    prompt = build_prompt_for_agent("Facilitator", state["subject"])
-    reply_text = chat(prompt, state["user_message"])
-    return {
-        "facilitator_reply": reply_text,
-    }
 
-def run_idea_generator(state: State) -> List[str]:
-    prompt = build_prompt_for_agent("IdeaGenerator", state["subject"])
-    reply_text = chat(prompt, state["user_message"], tools=[Tools.google_search])
-    return {
-        "idea_generator_reply": reply_text
-    }
+#def iterate_state(state: State) -> State:
+#     return {
+#        "iteration": state["iteration"] + 1,
+#    } 
 
-def build_mas_graph() -> StateGraph[State]:
+def build_mas_graph(idea_generator_agent, facilitator_agent, idea_structurer_agent, subject_specialist_agent) -> StateGraph[State]:
     graph_builder = StateGraph(State)
-    graph_builder.add_node("facilitator", run_facilitator)
-    graph_builder.add_node("idea_generator", run_idea_generator)
+    brainstorm_graph = build_discussion_subgraph(idea_generator_agent, idea_structurer_agent, subject_specialist_agent)
+    def facilitator_node(state: State):
+        reply = chat(
+            facilitator_agent,      
+            state["user_message"],
+            thread_id=state["thread_id"]
+        )
+        if state["facilitator_turn"] == 1:
+          state["facilitator_turn"] = 2
+          return {"facilitator_reply_1": reply}
+        else:
+          state["facilitator_turn"] = 1
+          return {"facilitator_reply_2": reply}
+              
+    graph_builder.add_node("brainstorm", brainstorm_graph)
+    graph_builder.add_node("facilitator", facilitator_node)
+    #graph_builder.add_node("iterate", iterate_state)
     graph_builder.add_edge(START, "facilitator")
-    graph_builder.add_edge(START, "idea_generator")
-    graph_builder.add_edge("facilitator", END)
-    graph_builder.add_edge("idea_generator", END)
-    mas = graph_builder.compile()
+    graph_builder.add_edge("facilitator", "brainstorm")
+    #graph_builder.add_edge("brainstorm", "facilitator")
+    #graph_builder.add_edge("facilitator", "iterate")
+    #graph_builder.add_edge("iterate", END)
+    graph_builder.add_edge("brainstorm", END)
+
+    checkpointer = InMemorySaver()
+    mas = graph_builder.compile(checkpointer=checkpointer)
     return mas
 
-def multiagent_chat_once(subject: str, user_message: str) -> str:
-    mas = build_mas_graph()
-    initial_state: State = {
-        "ideas": [],
-        "structures": [],
-        "subject": subject,
-        "user_message": user_message,
-        "facilitator_reply": "",
-    }
-    final_state = mas.invoke(initial_state)
-    return final_state["facilitator_reply"], final_state["idea_generator_reply"]
+def multiagent_chat_once(mas, initial_state: State, thread_id: str) -> str:
+    final_state = mas.invoke(initial_state, config={"configurable": {"thread_id": thread_id}},)
+    return final_state
