@@ -4,9 +4,12 @@ Main UI orchestrator for the Rich Console interface.
 This module coordinates all UI components and manages the main event loop
 """
 
+import uuid
 from rich.console import Console
 
-from bin.MultiAgentSystem.ochestrator import multiagent_chat_once
+from bin.MultiAgentSystem.ochestrator import build_mas_graph, multiagent_chat_once
+from bin.MultiAgentSystem.agents import create_all_agents
+from bin.MultiAgentSystem.state_schema import State
 from .conversation_manager import ConversationManager
 from .input_handler import InputHandler
 from .display_renderer import DisplayRenderer
@@ -24,11 +27,31 @@ class RichConsoleUI:
         """
         self.console = Console()
         self.subject = subject
+        self.thread_id = str(uuid.uuid4())
 
         # Initialize components
         self.conversation_manager = ConversationManager(max_history=5)
         self.input_handler = InputHandler(self.console)
         self.display_renderer = DisplayRenderer(self.console)
+
+        # Initialize state
+        self.state: State = {
+            "idea_board": "",
+            "structures": [],
+            "subject": subject,
+            "user_message": "",
+            "facilitator_reply": "",
+            "idea_generator_reply": "",
+            "subject_specialist_reply": "",
+            "critic_reply": "",
+            "iteration": 0,
+            "thread_id": self.thread_id
+        }
+
+        # Create agents and MAS graph
+        with self.display_renderer.show_agent_thinking("System", "cyan"):
+            facilitator, idea_generator, subject_specialist, idea_structurer, critic = create_all_agents(self.state)
+            self.mas = build_mas_graph(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
 
     def run(self) -> None:
         """
@@ -72,13 +95,13 @@ class RichConsoleUI:
 
     def _process_user_input(self, user_message: str) -> None:
         """
-        Process a user message and display the response.
+        Process a user message and display all agent responses.
 
         This method:
         1. Adds the user message to conversation history
         2. Displays the user message
-        3. Calls the backend (with spinner)
-        4. Adds and displays the response
+        3. Calls the multi-agent system (with spinner)
+        4. Displays each agent's response with appropriate colors
 
         Args:
             user_message: The user's message text
@@ -90,17 +113,49 @@ class RichConsoleUI:
         self.console.print()
         self.display_renderer.render_user_message(user_message)
 
-        # Call backend with spinner
+        # Update state with user message
+        self.state["user_message"] = user_message
+
+        # Call multi-agent system with spinner
         try:
-            with self.display_renderer.show_spinner_while_processing():
-                response = multiagent_chat_once(self.subject, user_message)
+            with self.display_renderer.show_agent_thinking("Multi-Agent System", "cyan"):
+                next_state = multiagent_chat_once(self.mas, self.state, self.thread_id)
 
-            # Add response to conversation history
-            self.conversation_manager.add_assistant_message(response)
+            # Update state for next turn
+            self.state = next_state
 
-            # Display response
+            # Display all agent responses
             self.console.print()
-            self.display_renderer.render_assistant_message(response)
+            self.console.rule("[bold cyan]Agent Responses[/bold cyan]")
+            self.console.print()
+
+            # Idea Generator
+            if next_state["idea_generator_reply"]:
+                self.display_renderer.render_idea_generator(next_state["idea_generator_reply"])
+                self.console.print()
+
+            # Subject Specialist
+            if next_state["subject_specialist_reply"]:
+                self.display_renderer.render_subject_specialist(next_state["subject_specialist_reply"])
+                self.console.print()
+
+            # Critic
+            if next_state["critic_reply"]:
+                self.display_renderer.render_critic(next_state["critic_reply"])
+                self.console.print()
+
+            # Idea Board (from Idea Structurer)
+            if next_state["idea_board"]:
+                self.display_renderer.render_idea_structurer(next_state["idea_board"])
+                self.console.print()
+
+            # Facilitator
+            if next_state["facilitator_reply"]:
+                self.display_renderer.render_facilitator(next_state["facilitator_reply"])
+                self.console.print()
+
+            # Add facilitator response to conversation history for display purposes
+            self.conversation_manager.add_assistant_message(next_state["facilitator_reply"])
 
         except Exception as e:
             # Handle errors gracefully

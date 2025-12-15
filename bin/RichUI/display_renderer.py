@@ -23,6 +23,13 @@ class DisplayRenderer:
     SYSTEM_STYLE = "bold yellow"
     HISTORY_STYLE = "dim"
 
+    # Agent-specific styles
+    IDEA_GENERATOR_STYLE = "bright_cyan"
+    SUBJECT_SPECIALIST_STYLE = "magenta"
+    CRITIC_STYLE = "red"
+    IDEA_STRUCTURER_STYLE = "yellow"
+    FACILITATOR_STYLE = "blue"
+
     def __init__(self, console: Console):
         """
         Initialize the display renderer.
@@ -119,6 +126,106 @@ The Facilitator will help you brainstorm ideas and structure your essay.
             expand=False
         ))
 
+    def render_idea_generator(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display an idea generator message in a bright cyan panel.
+
+        Args:
+            message: The idea generator's output
+            dimmed: Whether to display with dimmed styling (for history)
+        """
+        border_style = "dim bright_cyan" if dimmed else "bright_cyan"
+        title_style = "[dim bright_cyan]Idea Generator[/dim bright_cyan]" if dimmed else "[bright_cyan]Idea Generator[/bright_cyan]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
+    def render_subject_specialist(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display a subject specialist message in a magenta panel.
+
+        Args:
+            message: The subject specialist's output
+            dimmed: Whether to display with dimmed styling (for history)
+        """
+        border_style = "dim magenta" if dimmed else "magenta"
+        title_style = "[dim magenta]Subject Specialist[/dim magenta]" if dimmed else "[magenta]Subject Specialist[/magenta]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
+    def render_critic(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display a critic message in a red panel.
+
+        Args:
+            message: The critic's output
+            dimmed: Whether to display with dimmed styling (for history)
+        """
+        border_style = "dim red" if dimmed else "red"
+        title_style = "[dim red]Critic[/dim red]" if dimmed else "[red]Critic[/red]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
+    def render_idea_structurer(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display an idea structurer (idea board) message in a yellow panel.
+
+        Args:
+            message: The idea structurer's output
+            dimmed: Whether to display with dimmed styling (for history)
+        """
+        border_style = "dim yellow" if dimmed else "yellow"
+        title_style = "[dim yellow]Idea Board[/dim yellow]" if dimmed else "[yellow]Idea Board[/yellow]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
+    def render_facilitator(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display a facilitator message in a blue panel.
+
+        Args:
+            message: The facilitator's output
+            dimmed: Whether to display with dimmed styling (for history)
+        """
+        border_style = "dim blue" if dimmed else "blue"
+        title_style = "[dim blue]Facilitator[/dim blue]" if dimmed else "[blue]Facilitator[/blue]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
     @contextmanager
     def show_spinner_while_processing(self):
         """
@@ -130,6 +237,25 @@ The Facilitator will help you brainstorm ideas and structure your essay.
         """
         with self.console.status(
             "[bold blue]Facilitator is thinking...",
+            spinner="dots"
+        ):
+            yield
+
+    @contextmanager
+    def show_agent_thinking(self, agent_name: str, color: str = "blue"):
+        """
+        Context manager to show a spinner for a specific agent.
+
+        Args:
+            agent_name: Name of the agent (e.g., "Idea Generator")
+            color: Rich color string for the spinner text
+
+        Usage:
+            with renderer.show_agent_thinking("Idea Generator", "bright_cyan"):
+                response = llm_call()
+        """
+        with self.console.status(
+            f"[bold {color}]{agent_name} is thinking...",
             spinner="dots"
         ):
             yield
