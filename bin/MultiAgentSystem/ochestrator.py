@@ -41,6 +41,26 @@ def build_mas_graph(idea_generator_agent, facilitator_agent, idea_structurer_age
     mas = graph_builder.compile(checkpointer=checkpointer)
     return mas
 
-def multiagent_chat_once(mas, initial_state: State, thread_id: str) -> str:
-    final_state = mas.invoke(initial_state, config={"configurable": {"thread_id": thread_id}},)
-    return final_state
+def multiagent_chat_once(mas, initial_state: State, thread_id: str):
+    # final_state = mas.invoke(initial_state, config={"configurable": {"thread_id": thread_id}},)
+    #return final_state
+    fields = {
+        "idea_generator": "idea_generator_reply",
+        "subject_specialist": "subject_specialist_reply",
+        "critic": "critic_reply",
+        "idea_structurer": "idea_board",
+        "facilitator": "facilitator_reply",
+    }
+
+    for _, data in mas.stream(
+        initial_state,
+        config={"configurable": {"thread_id": thread_id}},
+        subgraphs=True,
+        stream_mode="updates",
+    ):
+        # data is like {"critic": {"critic_reply": "..."}} etc.
+        for node, state_key in fields.items():
+            if node in data:
+                node_update = data[node]
+                if isinstance(node_update, dict) and state_key in node_update:
+                    yield (node, state_key, node_update[state_key])

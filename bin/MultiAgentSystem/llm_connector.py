@@ -27,7 +27,7 @@ def chat(agent: object, user_input: str, thread_id: str) -> str:
 
     for chunk in agent.stream(
         {"messages": [{"role": "user", "content": user_input}]},
-        config={"configurable": {"thread_id": thread_id}},  # 👈 key change
+        config={"configurable": {"thread_id": thread_id}},  
         stream_mode="values",
     ):
         #print("Received chunk:", chunk)

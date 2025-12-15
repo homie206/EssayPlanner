@@ -2,6 +2,7 @@ from .ochestrator import build_mas_graph,multiagent_chat_once
 from .agents import create_all_agents
 from .state_schema import State
 import uuid 
+import sys, time
 
 def print_turn_summary(next_state: dict):
     sep = "-" * 80
@@ -33,6 +34,21 @@ def print_turn_summary(next_state: dict):
 
     print(big_sep + "\n")
 
+def type_out(text: str, delay: float = 0.02):
+    for ch in text:
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+        time.sleep(delay)
+
+def run_and_print(mas, initial_state: State, thread_id: str):
+    big_sep = "=" * 80
+    state = dict(initial_state)
+    for agent_name, state_key, reply in multiagent_chat_once(mas, initial_state, thread_id):
+        print("\n" + big_sep)
+        print(f"[{agent_name}] : ", end="", flush=True)
+        type_out(reply, delay=0.02)
+        state[state_key] = reply
+    return state
 
 if __name__ == "__main__":
     # Example usage
@@ -60,8 +76,8 @@ if __name__ == "__main__":
     mas = build_mas_graph(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
     
     while True:
-        next_state = multiagent_chat_once(mas, initial_state, initial_state["thread_id"])
-        print_turn_summary(next_state)
+        next_state = run_and_print(mas, initial_state, initial_state["thread_id"])
+        #print_turn_summary(next_state)
         initial_state = next_state
         user_message = input("Your turn (type 'exit' to quit): ")
         if user_message.lower() == 'exit':
