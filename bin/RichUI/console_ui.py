@@ -13,6 +13,7 @@ from bin.MultiAgentSystem.state_schema import State
 from .conversation_manager import ConversationManager
 from .input_handler import InputHandler
 from .display_renderer import DisplayRenderer
+from .agent_config import AGENT_CONFIG
 
 
 class RichConsoleUI:
@@ -63,6 +64,9 @@ class RichConsoleUI:
         # Display welcome screen
         self.display_renderer.render_welcome(self.subject)
 
+        # Show initial prompt to guide the user
+        self.console.print("[dim]What would you like help with? Share your thoughts or questions about the essay topic.[/dim]\n")
+
         # Main conversation loop
         while True:
             # Get user input
@@ -95,13 +99,13 @@ class RichConsoleUI:
 
     def _process_user_input(self, user_message: str) -> None:
         """
-        Process a user message and display all agent responses.
+        Process a user message and display agent responses as they stream in.
 
         This method:
         1. Adds the user message to conversation history
         2. Displays the user message
-        3. Calls the multi-agent system (with spinner)
-        4. Displays each agent's response with appropriate colors
+        3. Streams responses from the multi-agent system
+        4. Displays each agent's response as it completes (one by one)
 
         Args:
             user_message: The user's message text
@@ -116,46 +120,54 @@ class RichConsoleUI:
         # Update state with user message
         self.state["user_message"] = user_message
 
-        # Call multi-agent system with spinner
+        # Stream agent responses as they complete
         try:
-            with self.display_renderer.show_agent_thinking("Multi-Agent System", "cyan"):
-                next_state = multiagent_chat_once(self.mas, self.state, self.thread_id)
-
-            # Update state for next turn
-            self.state = next_state
-
-            # Display all agent responses
             self.console.print()
             self.console.rule("[bold cyan]Agent Responses[/bold cyan]")
             self.console.print()
 
-            # Idea Generator
-            if next_state["idea_generator_reply"]:
-                self.display_renderer.render_idea_generator(next_state["idea_generator_reply"])
-                self.console.print()
+            # Create the streaming generator
+            response_stream = multiagent_chat_once(self.mas, self.state, self.thread_id)
 
-            # Subject Specialist
-            if next_state["subject_specialist_reply"]:
-                self.display_renderer.render_subject_specialist(next_state["subject_specialist_reply"])
-                self.console.print()
+            # Show thinking animation while waiting for first response
+            with self.display_renderer.show_agent_thinking("Agents", "cyan"):
+                # Get first response (this blocks until first agent completes)
+                try:
+                    first_item = next(response_stream)
+                except StopIteration:
+                    # No responses generated
+                    return
 
-            # Critic
-            if next_state["critic_reply"]:
-                self.display_renderer.render_critic(next_state["critic_reply"])
+            # Process first response
+            agent_name, state_key, reply = first_item
+            if agent_name in AGENT_CONFIG:
+                config = AGENT_CONFIG[agent_name]
+                render_method = getattr(self.display_renderer, config["render_method"])
+                render_method(reply)
                 self.console.print()
+                self.state[state_key] = reply
 
-            # Idea Board (from Idea Structurer)
-            if next_state["idea_board"]:
-                self.display_renderer.render_idea_structurer(next_state["idea_board"])
-                self.console.print()
+            # Process remaining responses with thinking animation between each
+            while True:
+                # Show thinking animation while waiting for next agent
+                with self.display_renderer.show_agent_thinking("Agents", "cyan"):
+                    try:
+                        agent_name, state_key, reply = next(response_stream)
+                    except StopIteration:
+                        # No more responses
+                        break
 
-            # Facilitator
-            if next_state["facilitator_reply"]:
-                self.display_renderer.render_facilitator(next_state["facilitator_reply"])
-                self.console.print()
+                # Get agent configuration and render
+                if agent_name in AGENT_CONFIG:
+                    config = AGENT_CONFIG[agent_name]
+                    render_method = getattr(self.display_renderer, config["render_method"])
+                    render_method(reply)
+                    self.console.print()
+                    self.state[state_key] = reply
 
             # Add facilitator response to conversation history for display purposes
-            self.conversation_manager.add_assistant_message(next_state["facilitator_reply"])
+            if self.state.get("facilitator_reply"):
+                self.conversation_manager.add_assistant_message(self.state["facilitator_reply"])
 
         except Exception as e:
             # Handle errors gracefully

@@ -1,0 +1,61 @@
+"""
+Agent configuration mapping for rendering.
+
+Maps agent names (from multiagent_chat_once generator) to:
+- Display labels
+- Colors for Rich console
+- State keys for responses
+
+TODO: This should eventually move to bin/MultiAgentSystem/ when we refactor
+      the core system, since this metadata will be useful for web UI and
+      other interfaces (not just Rich UI).
+"""
+
+AGENT_CONFIG = {
+    "idea_generator": {
+        "label": "Idea Generator",
+        "color": "bright_cyan",
+        "state_key": "idea_generator_reply",
+        "render_method": "render_idea_generator"
+    },
+    "subject_specialist": {
+        "label": "Subject Specialist",
+        "color": "magenta",
+        "state_key": "subject_specialist_reply",
+        "render_method": "render_subject_specialist"
+    },
+    "critic": {
+        "label": "Critic",
+        "color": "red",
+        "state_key": "critic_reply",
+        "render_method": "render_critic"
+    },
+    "idea_structurer": {
+        "label": "Idea Structurer",
+        "color": "yellow",
+        "state_key": "idea_board",
+        "render_method": "render_idea_structurer"
+    },
+    "facilitator": {
+        "label": "Facilitator",
+        "color": "blue",
+        "state_key": "facilitator_reply",
+        "render_method": "render_facilitator"
+    }
+}
+
+
+def get_agent_config(agent_name: str) -> dict:
+    """
+    Get configuration for an agent by name.
+
+    Args:
+        agent_name: Name of the agent (e.g., "idea_generator")
+
+    Returns:
+        dict with label, color, state_key, render_method
+
+    Raises:
+        KeyError if agent_name not found
+    """
+    return AGENT_CONFIG[agent_name]

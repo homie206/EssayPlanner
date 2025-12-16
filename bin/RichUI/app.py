@@ -11,15 +11,27 @@ Usage:
     python -m bin.RichUI.app --subject "Your essay topic"
 """
 
+# Suppress warnings before any imports
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 import argparse
 import sys
+import os
 from rich.console import Console
+
+# Set USER_AGENT to suppress warning
+os.environ.setdefault('USER_AGENT', 'AI4ED-Essay-Assistant/1.0')
 
 from .console_ui import RichConsoleUI
 
 
 def main():
     """Main entry point for the Rich Console UI."""
+    # Suppress dependency warnings
+    warnings.filterwarnings("ignore", message="USER_AGENT environment variable not set")
+    warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality isn't compatible")
+
     parser = argparse.ArgumentParser(
         description="AI4ED Essay Planning Assistant (Rich UI)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
