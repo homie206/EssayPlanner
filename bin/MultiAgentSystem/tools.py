@@ -93,4 +93,4 @@ class Tools:
     )
 
     # Subject knowledge tool
-    retrieve_knowledge = retrieve_knowledge
+    knowledge_retreiver = retrieve_knowledge
