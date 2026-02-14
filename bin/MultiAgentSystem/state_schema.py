@@ -10,5 +10,6 @@ class State(TypedDict):
     idea_generator_reply: str
     subject_specialist_reply: str
     critic_reply: str
+    facilitation_done: bool
     iteration : int
     thread_id: str

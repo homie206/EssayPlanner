@@ -1,42 +1,58 @@
 from .llm_connector import create_agent, chat
 from .prompts import build_prompt_for_agent
 from .tools import Tools
+from .ochestrator import build_mas_graph,multiagent_chat_once
+from .agents import create_all_agents
+from .state_schema import State
+import uuid 
+import sys, time
+
+def type_out(text: str, delay: float = 0.02):
+    for ch in text:
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+        time.sleep(delay)
+
+def run_and_print(mas, initial_state: State, thread_id: str):
+    big_sep = "=" * 80
+    state = dict(initial_state)
+    for agent_name, state_key, reply in multiagent_chat_once(mas, initial_state, thread_id):
+        print("\n" + big_sep)
+        print(f"[{agent_name}] : ", end="", flush=True)
+        type_out(reply, delay=0.02)
+        state[state_key] = reply
+    return state
 
 
-prompt = build_prompt_for_agent("Critic", "Education", agent_turn=1)
-agent = create_agent(prompt)
 
-user_input = ("ESSAY QUESTION:\n"
-    "Should AI be used in education?\n"
-    "\n"
-    "CURRENT IDEA BOARD (student developed ideas):\n"
-    "\n"
-    "Idea 1: AI helps teachers with marking.\n"
-    "Student explanation: AI can automatically check grammar and structure in written work, "
-    "which reduces repetitive marking and saves teacher time.\n"
-    "\n"
-    "Idea 2: Students may rely too much on AI.\n"
-    "Student explanation: Students could use AI tools to plan or write work instead of thinking "
-    "independently, which may weaken problem-solving skills.\n"
-    "\n"
-    "Idea 3: AI enables personalised learning.\n"
-    "Student explanation: AI systems can adapt tasks to student level, allowing weaker students "
-    "to get support and stronger students to progress faster.\n"
-    "\n"
-    )
-
-reply = chat(
-        agent,      
-        "user message : " + user_input,
-        thread_id="abc"
-    )
+thread_id = str(uuid.uuid4())
+subject = "Education"
+user_message = input("What would you like to write an essay about? ")
+initial_state: State = {
+    "idea_board": "",
+    "structures": [],
+    "subject": subject,
+    "user_message": user_message,
+    "facilitator_turn": 1,
+    "facilitator_reply": "",
+    "idea_generator_reply": "",
+    "subject_specialist_reply": "",
+    "critic_reply": "",
+    "facilitation_done": False,
+    "iteration": 0,
+    "thread_id": thread_id
+}
+#create agents and the MAS graph
+facilitator, idea_generator, subject_specialist, idea_structurer, critic = create_all_agents(initial_state)
+mas = build_mas_graph(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
 
 while True:
- user_input = input("User: ") 
- reply = chat(
-            agent,      
-            "user message : " + user_input,
-            thread_id="abc"
-        )
-
- print(reply)
+    next_state = run_and_print(mas, initial_state, initial_state["thread_id"])
+    #print("User message:", next_state["user_message"])
+    #print_turn_summary(next_state)
+    initial_state = next_state
+    
+    #user_message = input("Your turn (type 'exit' to quit): ")
+    #if user_message.lower() == 'exit':
+    #    break
+    #initial_state["user_message"] = user_message

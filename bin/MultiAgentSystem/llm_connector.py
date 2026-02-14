@@ -51,8 +51,8 @@ def chat(agent: object, user_input: str, thread_id: str) -> str:
             else:
                 # normal assistant response
                 if last.content:
-                    print("\n[Assistant]")
-                    print(last.content)
+                   # print("\n[Assistant]")
+                   # print(last.content)
                     final_text = last.content
 
         # ---- TOOL RESPONSE

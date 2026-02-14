@@ -30,7 +30,7 @@ def create_all_agents(state: State):
     subject_prompt = build_prompt_for_agent("SubjectSpecialist", state["subject"])
     subject_specialist_agent = create_agent(
         subject_prompt,
-        tools=[Tools.retrieve_knowledge],
+        tools=[Tools.knowledge_retreiver],
     )
 
     # Idea Structurer
