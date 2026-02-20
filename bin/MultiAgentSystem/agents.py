@@ -1,7 +1,7 @@
 from .llm_connector import create_agent
 from .prompts import build_prompt_for_agent
 from .tools import Tools
-from .ochestrator import State  # adjust if State is elsewhere
+from .state_schema import State
 
 
 def create_all_agents(state: State):
@@ -40,11 +40,15 @@ def create_all_agents(state: State):
     #critic
     critic_prompt = build_prompt_for_agent("Critic", state["subject"])
     critic_agent = create_agent(critic_prompt, model_name="gpt-5")
-
+    
+    #router
+    router_prompt = build_prompt_for_agent("Router", state["subject"])
+    router_agent = create_agent(router_prompt)
     return (
         facilitator_agent,
         idea_generator_agent,
         subject_specialist_agent,
         idea_structurer_agent,
-        critic_agent
+        critic_agent,
+        router_agent
     )

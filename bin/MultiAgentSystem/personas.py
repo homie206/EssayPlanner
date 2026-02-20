@@ -324,7 +324,24 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
     "- guide the student toward forming a position\n"
 
     "Be supportive, constructive, and thought-provoking. \n"
-))
+)),
+"Router": AgentPersona(
+        name="router",
+        visible_to_student=False,
+        stages=["brainstorming"],
+        base_prompt = ("""\
+You are a router for an education ideation assistant.
+
+Routes:
+- idea_generation: create NEW ideas from scratch.
+- idea_expansion: expand/refine/improve existing ideas in the idea board.
+
+Rules:
+- If the user asks for brainstorming/new angles/new ideas => idea_generation.
+- If the user asks to expand/elaborate/refine/improve/go deeper => idea_expansion.
+Return exactly one route.
+"""
+    ))
 }
 
 def get_agent(name: str) -> AgentPersona:
