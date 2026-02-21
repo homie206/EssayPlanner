@@ -23,7 +23,7 @@ def create_all_agents(state: State):
     idea_gen_prompt = build_prompt_for_agent("IdeaGenerator", state["subject"])
     idea_generator_agent = create_agent(
         idea_gen_prompt,
-        tools=[Tools.google_search],
+        tools=[Tools.tavily_search_tool],
     )
 
     # Subject Specialist

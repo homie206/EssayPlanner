@@ -2,6 +2,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.tools import Tool
+from langchain_tavily import TavilySearch
 from langchain_google_community import GoogleSearchAPIWrapper
 from serpapi import GoogleSearch
 from langchain_community.document_loaders import WebBaseLoader
@@ -12,6 +13,10 @@ from langchain.tools import tool
 load_dotenv()
 
 # ---- ENV VARS ----
+
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+if not TAVILY_API_KEY:
+    raise RuntimeError("TAVILY_API_KEY not set in .env")
 
 SERP_API_KEY = os.getenv("SERP_API_KEY")
 if not SERP_API_KEY:
@@ -83,14 +88,13 @@ def retrieve_knowledge(query: str) -> str:
 class Tools:
     """Container for all LangChain tools used by agents in the planning module."""
 
-    # Google Search Tool
-    search_wrapper = GoogleSearchAPIWrapper(k=5)
-
-    google_search = Tool(
-        name="google_search",
-        description="Search Google for recent results.",
-        func=search_wrapper.run,
+    # Tavily Search Tool
+    tavily_search_tool = TavilySearch(
+        max_results=7,
+        topic="general",
+        search_depth="advanced",   #  deeper than basic 2 credits for deep, 1 for basic
     )
+    
 
     # Subject knowledge tool
     knowledge_retreiver = retrieve_knowledge
