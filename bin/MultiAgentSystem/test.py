@@ -24,11 +24,13 @@ initial_state: State = {
     "critic_reply": "",
     "facilitation_done": False,
     "iteration": 0,
-    "thread_id": thread_id
+    "thread_id": thread_id,
+    "essay_topic": user_message,
+    "route": "none"
 }
 #create agents and the MAS graph
 facilitator, idea_generator, subject_specialist, idea_structurer, critic, router = create_all_agents(initial_state)
-planning_module = PlanningModule(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
+planning_module = PlanningModule(idea_generator, facilitator, idea_structurer, subject_specialist, critic, router)
 
 while True:
     for node, key, value in planning_module.stream_updates(initial_state, thread_id):

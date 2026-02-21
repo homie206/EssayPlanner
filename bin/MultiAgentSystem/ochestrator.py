@@ -5,7 +5,6 @@ from langgraph.types import Command, interrupt
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
 
-
 class PlanningModule:
     """
     Multi-agent system wrapper:
@@ -110,16 +109,22 @@ class PlanningModule:
                 # Handle turn boundary
                 if "__interrupt__" in chunk:
                     prompt = chunk["__interrupt__"][0].value
-                    print("\n" + str(prompt))
+                    yield ("__interrupt__", "prompt", str(prompt))
                     user_response = input("User: ").strip()
 
                     # Resume from interrupt
                     initial_input = Command(resume=user_response)
                     break
-
-                # Emit useful node updates
-                for node, state_key in fields.items():
-                    if node in chunk:
-                        node_update = chunk[node]
-                        if isinstance(node_update, dict) and state_key in node_update:
-                            yield (node, state_key, node_update[state_key])
+                 
+                ## Emit useful node updates
+                #for node, state_key in fields.items():
+                #    if node in chunk:
+                #        node_update = chunk[node]
+                #        if isinstance(node_update, dict) and state_key in node_update:
+                #            yield (node, state_key, node_update[state_key])
+    
+    def show_graph(self):
+     # Mermaid diagram
+     mermaid = self.graph.get_graph().draw_mermaid()
+     with open("planning_graph.md", "w") as f:
+         f.write(mermaid)

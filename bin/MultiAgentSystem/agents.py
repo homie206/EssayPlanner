@@ -43,7 +43,7 @@ def create_all_agents(state: State):
     
     #router
     router_prompt = build_prompt_for_agent("Router", state["subject"])
-    router_agent = create_agent(router_prompt)
+    router_agent = create_agent(router_prompt, model_name="gpt-5")
     return (
         facilitator_agent,
         idea_generator_agent,

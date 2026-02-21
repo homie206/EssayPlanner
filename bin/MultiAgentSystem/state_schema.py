@@ -1,7 +1,7 @@
 from typing_extensions import Literal, TypedDict
 from typing import List
 
-Route = Literal["idea_generation", "idea_expansion"]
+Route = Literal["idea_generation", "idea_expansion", "none"]
 class State(TypedDict):
     idea_board: str
     structures: List[str]
@@ -14,4 +14,5 @@ class State(TypedDict):
     facilitation_done: bool
     iteration : int
     thread_id: str
+    essay_topic: str
     route: Route

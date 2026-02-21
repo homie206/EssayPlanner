@@ -29,14 +29,16 @@ class IdeationSubgraph:
 
         route = str(reply).strip().strip('"')
         if route not in ("idea_generation", "idea_expansion"):
-            route = "None" #Skipping ideation if router gives invalid output.
+            route = "none" #Skipping ideation if router gives invalid output.
+        
+        print(f"Router chose route: {route}")
 
         return {"route": route}
 
     def _idea_generation_node(self, state: State) -> dict:
         reply = chat(
             self.idea_generator_agent,
-            state["user_message"] + "\nExisting ideas: " + state.get("idea_board", ""),
+            state["user_message"] + "\nEssay topic: " + state["essay_topic"] + "\nExisting ideas: " + state["idea_board"],
             thread_id=state["thread_id"],
         )
         # End-of-turn: stop here and wait for resume
@@ -46,7 +48,7 @@ class IdeationSubgraph:
     def _idea_expansion_node(self, state: State) -> dict:
         reply = chat(
             self.subject_specialist_agent,
-            state["user_message"] + "\nExisting ideas: " + state.get("idea_board", ""),
+            state["user_message"] + "\nEssay topic: " + state["essay_topic"] + "\nExisting ideas: " + state["idea_board"],
             thread_id=state["thread_id"],
         )
         # End-of-turn: stop here and wait for resume
@@ -69,7 +71,7 @@ class IdeationSubgraph:
             {
                 "idea_generation": "idea_generation",
                 "idea_expansion": "idea_expansion",
-                "None": END,
+                "none": END,
             },
         )
 
@@ -77,3 +79,4 @@ class IdeationSubgraph:
         g.add_edge("idea_expansion", END)
 
         return g
+    
