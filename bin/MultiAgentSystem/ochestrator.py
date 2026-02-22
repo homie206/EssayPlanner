@@ -25,9 +25,11 @@ class PlanningModule:
 
         # Ideation Subgraph
         self.ideation = IdeationSubgraph(
+            facilitator_agent,
             router_agent,
             idea_generator_agent,
             subject_specialist_agent,
+            idea_structurer_agent
         )
 
         # Planning module graph (compiled)
@@ -38,24 +40,6 @@ class PlanningModule:
     # -----------------------------
     # Node functions
     # -----------------------------
-    def facilitator_node(self, state: State):
-        facilitator_input = (
-    f"Student message:\n{state['user_message']}\n\n"
-    f"Idea board:\n{state.get('idea_board', '')}\n\n"
-    f"Outline:\n{state.get('structures', '')}\n\n"
-    f"Subject expert notes:\n{state.get('subject_specialist_reply', '')}\n\n"
-    f"Critic feedback:\n{state.get('critic_reply', '')}"
-    )
-        reply = chat(
-            self.facilitator_agent,      
-            facilitator_input,
-            thread_id=state["thread_id"]
-        )
-        # End-of-turn: stop here and wait for resume
-        user_reply = interrupt(reply)
-
-        # When resumed, interrupt(...) returns the user's response
-        return {"facilitator_reply": reply, "user_message": user_reply}
     
 
     # -----------------------------
@@ -64,21 +48,18 @@ class PlanningModule:
     def _build_graph(self) -> StateGraph:
         gb = StateGraph(State)
 
-        gb.add_node("facilitator", self.facilitator_node)
-
         # ideation subgraph
-        gb.add_node("brainstorm", self.ideation.graph)
+        gb.add_node("ideation", self.ideation.graph)
 
-        gb.add_edge(START, "facilitator")
+        gb.add_edge(START, "ideation")
 
         # After facilitator gets a student reply, run ideation, then come back and prompt again
-        gb.add_edge("facilitator", "brainstorm")
-        gb.add_edge("brainstorm", "facilitator")
+        gb.add_edge("ideation", END)
 
         return gb
     
     # -----------------------------
-    # Streaming runner (your multiagent_chat_once, but as a method)
+    # Streaming runner with interrupt handling
     # -----------------------------
     def stream_updates(
         self,

@@ -56,9 +56,9 @@ def chat(agent: object, user_input: str, thread_id: str) -> str:
                     final_text = last.content
 
         # ---- TOOL RESPONSE
-        elif isinstance(last, ToolMessage):
-            print("\n[Tool returned result]")
-            print(last.content)
+        #elif isinstance(last, ToolMessage):
+        #    print("\n[Tool returned result]")
+        #    print(last.content)
 
     return final_text
 

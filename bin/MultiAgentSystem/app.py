@@ -67,7 +67,7 @@ if __name__ == "__main__":
         "idea_generator_reply": "",
         "subject_specialist_reply": "",
         "critic_reply": "",
-        "iteration": 0,
+        "iteration": 1,
         "thread_id": thread_id
     }
 
