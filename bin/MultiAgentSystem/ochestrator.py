@@ -4,6 +4,7 @@ from .idea_gen import IdeationSubgraph
 from langgraph.types import Command, interrupt
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
+from .structuring_phase import StructuringSubgraph
 
 class PlanningModule:
     """
@@ -13,7 +14,7 @@ class PlanningModule:
       - exposes a streaming loop similar to your multiagent_chat_once()
     """
     def __init__(self,idea_generator_agent,facilitator_agent,idea_structurer_agent,subject_specialist_agent,
-                 critic_agent, router_agent):
+                 critic_agent, router_agent, structure_coach_agent, argument_flow_agent):
         
         # Agents
         self.idea_generator_agent = idea_generator_agent
@@ -36,6 +37,14 @@ class PlanningModule:
         self._checkpointer = InMemorySaver()
         self.graph = self._build_graph().compile(checkpointer=self._checkpointer)
 
+        # Structuring Subgraph
+        self.structuring = StructuringSubgraph(
+            facilitator_agent,
+            structure_coach_agent,
+            idea_structurer_agent,
+            argument_flow_agent,
+        )
+
 
     # -----------------------------
     # Node functions
@@ -48,13 +57,12 @@ class PlanningModule:
     def _build_graph(self) -> StateGraph:
         gb = StateGraph(State)
 
-        # ideation subgraph
         gb.add_node("ideation", self.ideation.graph)
+        gb.add_node("structuring", self.structuring.graph)
 
         gb.add_edge(START, "ideation")
-
-        # After facilitator gets a student reply, run ideation, then come back and prompt again
-        gb.add_edge("ideation", END)
+        gb.add_edge("ideation", "structuring")
+        gb.add_edge("structuring", END)
 
         return gb
     
