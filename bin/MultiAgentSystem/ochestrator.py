@@ -89,20 +89,17 @@ class PlanningModule:
             ):
                 # Handle turn boundary
                 if "__interrupt__" in chunk:
-                    prompt = chunk["__interrupt__"][0].value
-                    yield ("__interrupt__", "prompt", str(prompt))
-                    user_response = input("User: ").strip()
-
+                    user_response = input("Your turn: ").strip()
                     # Resume from interrupt
                     initial_input = Command(resume=user_response)
                     break
                  
                 ## Emit useful node updates
-                #for node, state_key in fields.items():
-                #    if node in chunk:
-                #        node_update = chunk[node]
-                #        if isinstance(node_update, dict) and state_key in node_update:
-                #            yield (node, state_key, node_update[state_key])
+                for node, state_key in fields.items():
+                    if node in chunk:
+                        node_update = chunk[node]
+                        if isinstance(node_update, dict) and state_key in node_update:
+                            yield (node, state_key, node_update[state_key])
     
     def show_graph(self):
      # Mermaid diagram
