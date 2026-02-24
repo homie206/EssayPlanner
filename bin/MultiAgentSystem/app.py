@@ -1,85 +1,136 @@
-from .ochestrator import build_mas_graph,multiagent_chat_once
+from __future__ import annotations
+
+import uuid
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
 from .agents import create_all_agents
-from .state_schema import State
-import uuid 
-import sys, time
+from .ochestrator import PlanningModule
+from .state_schema import State  
 
-def print_turn_summary(next_state: dict):
-    sep = "-" * 80
-    big_sep = "=" * 80
+app = FastAPI(title="Essay MAS API")
 
-    print("\n" + big_sep)
-    print(" MULTI-AGENT TURN SUMMARY ".center(80, "="))
-    print(big_sep + "\n")
 
-    # Idea Generator
-    print("IDEA GENERATOR".center(80, "-"))
-    print(next_state["idea_generator_reply"], "\n")
+# ---------
+# In-memory session store
+# ---------
+@dataclass
+class Session:
+    thread_id: str
+    planning_module: PlanningModule
+    state: Dict[str, Any]
 
-    # Subject Specialist
-    print("SUBJECT SPECIALIST".center(80, "-"))
-    print(next_state["subject_specialist_reply"], "\n")
 
-    # Critic
-    print("CRITIC".center(80, "-"))
-    print(next_state["critic_reply"], "\n")
+SESSIONS: Dict[str, Session] = {}
 
-    # Idea Board
-    print("IDEA BOARD SO FAR".center(80, "-"))
-    print(next_state["idea_board"], "\n")
+# ---------
+# Request/Response models
+# ---------
+class CreateSessionRequest(BaseModel):
+    essay_topic: str
+    subject: str = "Education"
 
-    # Facilitator
-    print("FACILITATOR".center(80, "-"))
-    print(next_state["facilitator_reply"], "\n")
 
-    print(big_sep + "\n")
+class MessageRequest(BaseModel):
+    message: str
 
-def type_out(text: str, delay: float = 0.02):
-    for ch in text:
-        sys.stdout.write(ch)
-        sys.stdout.flush()
-        time.sleep(delay)
 
-def run_and_print(mas, initial_state: State, thread_id: str):
-    big_sep = "=" * 80
-    state = dict(initial_state)
-    for agent_name, state_key, reply in multiagent_chat_once(mas, initial_state, thread_id):
-        print("\n" + big_sep)
-        print(f"[{agent_name}] : ", end="", flush=True)
-        type_out(reply, delay=0.02)
-        state[state_key] = reply
-    return state
+class RunResponse(BaseModel):
+    thread_id: str
+    updates: List[Dict[str, str]]
+    needs_user_input: bool
+    interrupt_prompt: Optional[str] = None
 
-if __name__ == "__main__":
-    # Example usage
-    # change the subject and user message as needed
 
-    thread_id = str(uuid.uuid4())
-    subject = "Climate Change"
-    user_message = input("What would you like to write an essay about? ")
-    initial_state: State = {
+# ---------
+# Helpers
+# ---------
+def _make_initial_state(thread_id: str, subject: str, essay_topic: str) -> Dict[str, Any]:
+    return {
         "idea_board": "",
         "structures": [],
         "subject": subject,
-        "user_message": user_message,
+        "turn_user_messages": [],
+        "latest_user_message": essay_topic,   # first message = essay topic
         "facilitator_turn": 1,
         "facilitator_reply": "",
         "idea_generator_reply": "",
         "subject_specialist_reply": "",
         "critic_reply": "",
+        "facilitation_done": False,
         "iteration": 1,
-        "thread_id": thread_id
+        "thread_id": thread_id,
+        "essay_topic": essay_topic,
+        "route": "none",
     }
 
-    #create agents and the MAS graph
-    facilitator, idea_generator, subject_specialist, idea_structurer, critic = create_all_agents(initial_state)
-    mas = build_mas_graph(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
-    
-    while True:
-        next_state = run_and_print(mas, initial_state, initial_state["thread_id"])
-        #print_turn_summary(next_state)
-        initial_state = next_state
-        user_message = input("Your turn (type 'exit' to quit): ")
-        if user_message.lower() == 'exit':
+
+def _run_until_interrupt(session: Session, resume_text: Optional[str] = None) -> RunResponse:
+    updates: List[Dict[str, str]] = []
+    interrupt_prompt: Optional[str] = None
+    needs_user_input = False
+
+    # Run the graph and collect updates
+    for node, key, value in session.planning_module.stream_updates(
+        session.state,
+        thread_id=session.thread_id,
+        resume_text=resume_text,
+    ):
+        if node == "__interrupt__":
+            needs_user_input = True
+            interrupt_prompt = value or None
             break
-        initial_state["user_message"] = user_message
+
+        updates.append({"node": node, "key": key, "value": value})
+
+        # Keep server-side state roughly in sync.
+        # This is a simple approach: if your node writes "idea_board", update it, etc.
+        # (Your checkpointer/thread_id is still the real source of truth.)
+        session.state[key] = value
+
+    return RunResponse(
+        thread_id=session.thread_id,
+        updates=updates,
+        needs_user_input=needs_user_input,
+        interrupt_prompt=interrupt_prompt,
+    )
+
+
+# ---------
+# API
+# ---------
+@app.post("/sessions", response_model=RunResponse)
+def create_session(req: CreateSessionRequest):
+    thread_id = str(uuid.uuid4())
+    initial_state = _make_initial_state(thread_id, req.subject, req.essay_topic)
+
+    # Create agents + graph
+    facilitator, idea_generator, subject_specialist, idea_structurer, critic, router = create_all_agents(initial_state)
+    planning_module = PlanningModule(idea_generator, facilitator, idea_structurer, subject_specialist, critic, router)
+
+    session = Session(thread_id=thread_id, planning_module=planning_module, state=initial_state)
+    SESSIONS[thread_id] = session
+
+    # Run once: produces facilitator output, etc., then stops at interrupt waiting for next user input
+    return _run_until_interrupt(session, resume_text=None)
+
+
+@app.post("/sessions/{thread_id}/message", response_model=RunResponse)
+def send_message(thread_id: str, req: MessageRequest):
+    session = SESSIONS.get(thread_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Unknown thread_id")
+
+    # Resume the graph with the user's message
+    return _run_until_interrupt(session, resume_text=req.message)
+
+
+@app.get("/sessions/{thread_id}")
+def get_session_state(thread_id: str):
+    session = SESSIONS.get(thread_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Unknown thread_id")
+    return {"thread_id": thread_id, "state": session.state}

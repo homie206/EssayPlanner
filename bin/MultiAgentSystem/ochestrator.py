@@ -1,6 +1,6 @@
 from .state_schema import State
 from .llm_connector import chat
-from .idea_gen import IdeationSubgraph
+from .idea_gen_graph import IdeationSubgraph
 from langgraph.types import Command, interrupt
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
@@ -89,7 +89,9 @@ class PlanningModule:
             ):
                 # Handle turn boundary
                 if "__interrupt__" in chunk:
-                    user_response = input("Your turn: ").strip()
+                    prompt = chunk["__interrupt__"][0].value
+                    print (str(prompt))
+                    user_response = input().strip()
                     # Resume from interrupt
                     initial_input = Command(resume=user_response)
                     break

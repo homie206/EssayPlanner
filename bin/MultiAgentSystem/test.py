@@ -27,7 +27,8 @@ initial_state: State = {
     "iteration": 1,
     "thread_id": thread_id,
     "essay_topic": user_message,
-    "route": "none"
+    "route": "none",
+    "done": False
 }
 #create agents and the MAS graph
 facilitator, idea_generator, subject_specialist, idea_structurer, critic, router = create_all_agents(initial_state)

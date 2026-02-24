@@ -87,19 +87,32 @@ class IdeationSubgraph:
         return {"turn_user_messages": []}
     
     def _structure_node(self, state: State):
-        print(state["idea_generator_reply"])
         reply = chat(
             self.idea_structurer_agent,      
             "Existing ideas: " + state["idea_board"] +  "\nStudent's  messages: " + "\n".join(state["turn_user_messages"]),
             thread_id=state["thread_id"],
         )
-        print("Structurer reply:", reply)
+        #print("Structurer reply:", reply)
         return {"idea_board": reply}
     
     def _iterater(self, state: State):
         iteration = state["iteration"] + 1
         print(f"--- Starting iteration {iteration} ---")
         return {"iteration": iteration}
+    
+    def stop_condition(self, state: State) -> bool:
+        stop_statement = "We've done a few rounds of ideation. "
+        if state["iteration"] > 5 :
+            stop_statement = "We've done several more rounds of ideation."
+        ans = interrupt(
+         stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the critic phase? (y/n)")
+        a = str(ans).strip().lower()
+
+        yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
+        #no = a in {"n", "no", "nope", "not yet", "later", "keep going", "continue ideation"}
+    
+        if yes:
+            return {"done": True}
     
     def save_mermaid_png(self, output_file_path: str = "ideation_subgraph.png") -> str:
         """
@@ -129,6 +142,7 @@ class IdeationSubgraph:
         g.add_node("idea_expansion", self._idea_expansion_node)
         g.add_node("structure", self._structure_node)
         g.add_node("cleanup", self._cleanup_messages)
+        g.add_node("stop_condition", self.stop_condition)
         
         g.add_edge(START, "facilitator")
         g.add_edge("facilitator", "user_reply_1")
@@ -156,8 +170,20 @@ class IdeationSubgraph:
         g.add_edge("idea_expansion", "user_reply_2")
         g.add_edge("user_reply_2", "structure")
         g.add_edge("structure", "cleanup")
-        g.add_edge("cleanup", "facilitator")
-
-
+        g.add_conditional_edges(
+            "cleanup",
+            lambda s: "stop?" if (s["iteration"] >= 5 and s["iteration"] % 5 == 0) else "continue",
+            {
+                "stop?": "stop_condition",
+                "continue": "facilitator",
+            },
+        )
+        g.add_conditional_edges(
+            "stop_condition",
+            lambda s: s["done"],
+            {
+                True: END,
+                False: "facilitator",   
+            })
         return g
     
