@@ -61,48 +61,83 @@ class PlanningModule:
     # -----------------------------
     # Streaming runner with interrupt handling
     # -----------------------------
-    def stream_updates(
-        self,
-        initial_state: State,
-        thread_id: str,
-    ):
-        """
-        Yields (node_name, state_key, value) updates.
-
-        Handles interrupts by prompting on CLI and resuming with Command(resume=...).
-        """
-
-        fields = {
-    "facilitator": "facilitator_reply",
-    "router": "route",
-    "idea_generation": "idea_generator_reply",
-    "idea_expansion": "subject_specialist_reply",
-    }
-        initial_input =initial_state
-
-        while True:
-            for _, chunk in self.graph.stream(
-                initial_input,
-                config={"configurable": {"thread_id": thread_id}},
-                subgraphs=True,
-                stream_mode="updates",
-            ):
-                # Handle turn boundary
-                if "__interrupt__" in chunk:
-                    prompt = chunk["__interrupt__"][0].value
-                    print (str(prompt))
-                    user_response = input().strip()
-                    # Resume from interrupt
-                    initial_input = Command(resume=user_response)
-                    break
-                 
-                ## Emit useful node updates
-                for node, state_key in fields.items():
-                    if node in chunk:
-                        node_update = chunk[node]
-                        if isinstance(node_update, dict) and state_key in node_update:
-                            yield (node, state_key, node_update[state_key])
+    #def stream_updates(
+    #    self,
+    #    initial_state: State,
+    #    thread_id: str,
+    #):
+    #    """
+    #    Yields (node_name, state_key, value) updates.
+#
+    #    Handles interrupts by prompting on CLI and resuming with Command(resume=...).
+    #    """
+#
+    #    fields = {
+    #"facilitator": "facilitator_reply",
+    #"router": "route",
+    #"idea_generation": "idea_generator_reply",
+    #"idea_expansion": "subject_specialist_reply",
+    #}
+    #    initial_input =initial_state
+#
+    #    while True:
+    #        for _, chunk in self.graph.stream(
+    #            initial_input,
+    #            config={"configurable": {"thread_id": thread_id}},
+    #            subgraphs=True,
+    #            stream_mode="updates",
+    #        ):
+    #            # Handle turn boundary
+    #            if "__interrupt__" in chunk:
+    #                prompt = chunk["__interrupt__"][0].value
+    #                print (str(prompt))
+    #                user_response = input().strip()
+    #                # Resume from interrupt
+    #                initial_input = Command(resume=user_response)
+    #                break
+    #             
+    #            ## Emit useful node updates
+    #            for node, state_key in fields.items():
+    #                if node in chunk:
+    #                    node_update = chunk[node]
+    #                    if isinstance(node_update, dict) and state_key in node_update:
+    #                        yield (node, state_key, node_update[state_key])
     
+    def stream_updates(self, initial_state: State, thread_id: str, resume_text: str | None = None):
+     """
+     Run until the next interrupt (or END).
+     Yields updates, and on interrupt yields ("__interrupt__", "interrupt_prompt", <prompt>) then returns.
+     """
+     initial_input = Command(resume=resume_text) if resume_text is not None else initial_state
+ 
+     for _, chunk in self.graph.stream(
+         initial_input,
+         config={"configurable": {"thread_id": thread_id}},
+         subgraphs=True,
+         stream_mode="updates",
+     ):
+         # interrupt boundary
+         if "__interrupt__" in chunk:
+             prompt = chunk["__interrupt__"][0].value
+             yield ("__interrupt__", "interrupt_prompt", str(prompt))
+             return
+ 
+         # flatten updates (handles subgraph outputs)
+         for node_name, node_update in chunk.items():
+             if node_name == "__interrupt__":
+                 continue
+ 
+             # if parent node (e.g., "ideation") wraps subnodes
+             if node_name == "ideation" and isinstance(node_update, dict):
+                 for subnode, subupdate in node_update.items():
+                     if isinstance(subupdate, dict):
+                         for k, v in subupdate.items():
+                             yield (subnode, k, v)
+                 continue
+ 
+             if isinstance(node_update, dict):
+                 for k, v in node_update.items():
+                     yield (node_name, k, v)
     def show_graph(self):
      # Mermaid diagram
      mermaid = self.graph.get_graph().draw_mermaid()
