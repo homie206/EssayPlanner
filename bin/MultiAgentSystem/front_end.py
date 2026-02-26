@@ -29,10 +29,13 @@ def role_from_key(node: str, key: str) -> str:
     return node or "system"
 
 def should_display(key: str, value) -> bool:
+    """
+    Only show agent replies (NOT the idea_board).
+    """
     if value is None:
         return False
     if isinstance(value, str):
-        return value.strip() != "" and (key.endswith("_reply") or key in {"idea_board"})
+        return value.strip() != "" and key.endswith("_reply")
     return False
 
 
@@ -43,11 +46,10 @@ ROLE_COLORS = {
     "idea_generator": "#E8F5E9",     # light green
     "subject_specialist": "#FFF3E0", # light orange
     "critic": "#FCE4EC",            # light pink
-    # "system": "#F5F5F5",           # light grey
+    "system": "#F5F5F5",           # light grey
 }
 
-# NEW: choose which side each agent appears on
-# You can swap these around however you like.
+# choose which side each agent appears on
 ROLE_SIDE = {
     "user": "right",
     "facilitator": "left",
@@ -60,14 +62,13 @@ ROLE_SIDE = {
 
 def render_coloured_message(role: str, content: str):
     """
-    Render a colored bubble aligned left/right (so different agents can appear on different sides).
+    Render a colored bubble aligned left/right.
     """
     bg = ROLE_COLORS.get(role, "#F5F5F5")
     border = "#E0E0E0"
     text = "#111111"
     side = ROLE_SIDE.get(role, "left")
 
-    # HTML escape minimal to avoid breaking layout
     safe = (
         str(content)
         .replace("&", "&amp;")
@@ -76,7 +77,6 @@ def render_coloured_message(role: str, content: str):
     )
 
     justify = "flex-end" if side == "right" else "flex-start"
-    # Slightly different corner rounding to feel like chat bubbles
     radius = "14px 14px 4px 14px" if side == "right" else "14px 14px 14px 4px"
 
     html = f"""
@@ -177,10 +177,9 @@ with st.sidebar:
         st.rerun()
 
 
-# Render chat so far (agents can now appear on different sides)
+# Render chat so far
 for msg in st.session_state.chat:
-    role = msg["role"]
-    render_coloured_message(role, msg["content"])
+    render_coloured_message(msg["role"], msg["content"])
 
 
 # ----------------------------
