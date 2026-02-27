@@ -10,13 +10,11 @@ def build_prompt_for_agent(
     agent_turn: int = 1
 ) -> str:
     persona = get_agent(agent_name)
-    base_prompt = persona.base_prompt
+    base_prompt = persona.base_prompt if agent_turn == 1 else persona.base_prompt_2
 
     subject = essay_subject or "the subject area"
     level = "high-school"  # placeholder for now
     
-    if agent_turn == 2:
-        base_prompt = persona.base_prompt_2
 
     if "{subject}" in base_prompt or "{level}" in base_prompt:
         base_prompt = base_prompt.format(subject=subject, level=level)

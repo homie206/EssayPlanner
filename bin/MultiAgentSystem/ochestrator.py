@@ -1,6 +1,7 @@
 from .state_schema import State
 from .llm_connector import chat
 from .idea_gen_graph import IdeationSubgraph
+from .critic_graph import CriticSubgraph
 from langgraph.types import Command, interrupt
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
@@ -12,23 +13,31 @@ class PlanningModule:
       - owns the ideation subgraph
       - exposes a streaming loop similar to your multiagent_chat_once()
     """
-    def __init__(self,idea_generator_agent,facilitator_agent,idea_structurer_agent,subject_specialist_agent,
-                 critic_agent, router_agent):
+    def __init__(self,idea_generator_agent,facilitator_agent_ideation,idea_structurer_agent,subject_specialist_agent,
+                 critic_agent, router_agent, facilitator_agent_critic):
         
         # Agents
         self.idea_generator_agent = idea_generator_agent
-        self.facilitator_agent = facilitator_agent
+        self.facilitator_agent_ideation = facilitator_agent_ideation
         self.idea_structurer_agent = idea_structurer_agent
         self.subject_specialist_agent = subject_specialist_agent
         self.critic_agent = critic_agent
         self.router_agent = router_agent
+        self.facilitator_agent_critic = facilitator_agent_critic
 
         # Ideation Subgraph
         self.ideation = IdeationSubgraph(
-            facilitator_agent,
-            router_agent,
-            idea_generator_agent,
-            subject_specialist_agent,
+            self.facilitator_agent_ideation,
+            self.router_agent,
+            self.idea_generator_agent,
+            self.subject_specialist_agent,
+            self.idea_structurer_agent
+        )
+        
+        # Critic Subgraph
+        self.critic = CriticSubgraph(
+            self.facilitator_agent_critic,
+            critic_agent,
             idea_structurer_agent
         )
 
@@ -51,10 +60,12 @@ class PlanningModule:
         # ideation subgraph
         gb.add_node("ideation", self.ideation.graph)
 
-        gb.add_edge(START, "ideation")
+        # critic subgraph
+        gb.add_node("critic", self.critic.graph)
 
-        # After facilitator gets a student reply, run ideation, then come back and prompt again
-        gb.add_edge("ideation", END)
+        gb.add_edge(START, "ideation")
+        gb.add_edge("ideation", "critic")
+        gb.add_edge("critic", END)
 
         return gb
     
