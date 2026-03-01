@@ -4,7 +4,7 @@ from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
 from pathlib import Path
-
+from langgraph.checkpoint.memory import InMemorySaver
 
 class CriticSubgraph:
     """
@@ -14,7 +14,7 @@ class CriticSubgraph:
         self.facilitator_agent = facilitator_agent
         self.critic_agent = critic_agent
         self.idea_structurer_agent = idea_structurer_agent
-        self.graph = self._build().compile(checkpointer=True) 
+        self.graph = self._build().compile(checkpointer=InMemorySaver()) 
         
     # ---- nodes ----
     def _facilitator_node(self, state: State):
@@ -32,12 +32,18 @@ class CriticSubgraph:
         )
         return {"facilitator_reply": reply}
     
-    def _user_turn_node(self, state: State):
+    def _user_turn_node_1(self, state: State):
         user_reply = interrupt("Your turn:")
         messages = state.get("turn_user_messages", [])
         messages.append(user_reply)
         return {"latest_user_message": user_reply, "turn_user_messages": messages}
     
+    def _user_turn_node_2(self, state: State):
+        user_reply = interrupt("Your turn:")
+        messages = state.get("turn_user_messages", [])
+        messages.append(user_reply)
+        return {"latest_user_message": user_reply, "turn_user_messages": messages}
+        
     def _critic_node(self, state: State):
         critic_input = (
     f"Student message:\n{state['latest_user_message']}\n\n"
@@ -104,27 +110,28 @@ class CriticSubgraph:
     # ---- graph build ----
     def _build(self) -> StateGraph:
         g = StateGraph(State)
-        g.add_node("iterater", self._iterater)
+
+        # ---- nodes ----
+        g.add_node("iterator", self._iterater)
         g.add_node("facilitator", self._facilitator_node)
-        g.add_node("user_reply", self._user_turn_node)
+        g.add_node("user_reply_1", self._user_turn_node_1)
+        g.add_node("user_reply_2", self._user_turn_node_2)
         g.add_node("critic", self._critic_node)
         g.add_node("structure", self._structure_node)
         g.add_node("cleanup", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
-        
+
+        # ---- edges ----
         g.add_edge(START, "facilitator")
-        g.add_edge("facilitator", "user_reply")
-        g.add_edge("user_reply_1", "iterater")
-        
-       # g.add_edge("idea_generation", "cleanup")
-       # g.add_edge("idea_expansion", "cleanup")
-        g.add_edge("idea_generation", "user_reply_2")
-        g.add_edge("idea_expansion", "user_reply_2")
+        g.add_edge("facilitator", "user_reply_1")
+        g.add_edge("user_reply_1", "critic")
+        g.add_edge("critic", "user_reply_2")
         g.add_edge("user_reply_2", "structure")
         g.add_edge("structure", "cleanup")
+        g.add_edge("cleanup", "iterator")
         g.add_conditional_edges(
-            "cleanup",
-            lambda s: "stop?" if (s["iteration"] >= 5 and s["iteration"] % 5 == 0) else "continue",
+            "iterator",
+            lambda s: "stop?" if (s["iteration"] >= 2 and s["iteration"] % 2 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",
@@ -132,7 +139,7 @@ class CriticSubgraph:
         )
         g.add_conditional_edges(
             "stop_condition",
-            lambda s: s["done"],
+            lambda s: s["criticisng_done"],
             {
                 True: END,
                 False: "facilitator",   

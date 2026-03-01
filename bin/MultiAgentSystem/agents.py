@@ -17,7 +17,7 @@ def create_all_agents(state: State):
 
     # Facilitator
     facilitator_prompt = build_prompt_for_agent("Facilitator", state["subject"])
-    facilitator_critic_promt = build_prompt_for_agent("FacilitatorCritic", state["subject"], agent_turn=2)
+    facilitator_critic_promt = build_prompt_for_agent("Facilitator", state["subject"], agent_turn=2)
     facilitator_agent_ideation = create_agent(facilitator_prompt)
     facilitator_agent_critic = create_agent(facilitator_critic_promt)
 

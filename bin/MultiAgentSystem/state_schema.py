@@ -17,4 +17,4 @@ class State(TypedDict):
     thread_id: str
     essay_topic: str
     route: Route
-    done : bool
+    criticisng_done : bool

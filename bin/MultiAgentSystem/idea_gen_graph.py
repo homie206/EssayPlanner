@@ -112,7 +112,7 @@ class IdeationSubgraph:
         #no = a in {"n", "no", "nope", "not yet", "later", "keep going", "continue ideation"}
     
         if yes:
-            return {"done": True}
+            return {"facilitation_done": True}
     
     def save_mermaid_png(self, output_file_path: str = "ideation_subgraph.png") -> str:
         """
@@ -180,7 +180,7 @@ class IdeationSubgraph:
         )
         g.add_conditional_edges(
             "stop_condition",
-            lambda s: s["done"],
+            lambda s: s["facilitation_done"],
             {
                 True: END,
                 False: "facilitator",   
