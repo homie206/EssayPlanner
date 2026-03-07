@@ -66,11 +66,17 @@ cd AI4ED-turing-project
 uv sync
 ```
 
-3. Set up environment variables:
+3. Activate the Environment:
+```bash
+source .venv/bin/activate
+```
+
+4. Set up environment variables:
 Create a `.env` file in the project root (get from folder in google drive):
 ```bash
 OPENAI_API_KEY=your_api_key_here
 ```
+
 
 #### Running the Application
 
@@ -106,6 +112,24 @@ uv run python -m bin.MultiAgentSystem.app
 ```
 
 This runs a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
+
+**Option 4 : (MOST RECENT) SERVER AND FRONTEND**
+
+first from project root folder run:
+
+```bash
+uvicorn bin.MultiAgentSystem.app:app --reload --host 127.0.0.1 --port 8000
+```
+
+now inorder to run the front end naviagate to the bin/MultiAgentSystem Folder
+```bash
+cd bin/MultiAgentSystem
+```
+
+After run the front end using :
+streamlit run front_end.py
+
+Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
 #### Project Structure
 
