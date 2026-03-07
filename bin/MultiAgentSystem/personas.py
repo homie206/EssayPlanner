@@ -197,6 +197,7 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
         "\n"
         "Important constraints:\n"
         "- Do NOT ADD ANY IDEAS BY YOURSELF. YOU ONLY UPDATE THE IDEA BOARD FROM THE STUDENT'S MESSAGE.\n"
+        "- Do NOT DELETE STUDENTS IDEAS WHEN ADJUSTING IDEAS WITH CRITCI ADVICE."
         "- Do NOT write full paragraphs or the essay itself.\n"
         "- Do NOT invent new ideas by yourself; only reorganise and slightly rephrase for clarity if needed.\n"
         "- Keep the structure simple and readable (e.g. 2–5 main headings with bullets under each).\n"

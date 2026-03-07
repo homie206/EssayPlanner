@@ -46,12 +46,13 @@ def make_initial_state(thread_id: str, subject: str, essay_topic: str) -> State:
         "subject_specialist_reply": "",
         "critic_reply": "",
         "facilitation_done": False,
-        "iteration": 1,
+        "ideation_iteration": 1,
+        "critic_iteration": 1,
         "thread_id": thread_id,
         "essay_topic": essay_topic,
         "route": "none",
         "done": False,
-    }
+    }   
 
 
 def run_once(thread_id: str, resume_text: Optional[str]) -> Dict[str, Any]:
@@ -85,14 +86,15 @@ def start(req: StartReq):
     thread_id = str(uuid.uuid4())
     state = make_initial_state(thread_id, req.subject, req.essay_topic)
 
-    facilitator, idea_gen, subject_spec, structurer, critic, router = create_all_agents(state)
+    facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic = create_all_agents(state)
     mas = PlanningModule(
-        idea_generator_agent=idea_gen,
-        facilitator_agent=facilitator,
-        idea_structurer_agent=structurer,
-        subject_specialist_agent=subject_spec,
+        idea_generator_agent=idea_generator,
+        facilitator_agent_ideation=facilitator_ideation,
+        idea_structurer_agent=idea_structurer,
+        subject_specialist_agent=subject_specialist,
         critic_agent=critic,
         router_agent=router,
+        facilitator_agent_critic=facilitator_agent_critic
     )
 
     SESSIONS[thread_id] = {"mas": mas, "state": state}

@@ -96,13 +96,13 @@ class IdeationSubgraph:
         return {"idea_board": reply}
     
     def _iterater(self, state: State):
-        iteration = state["iteration"] + 1
+        iteration = state["ideation_iteration"] + 1
         print(f"--- Starting iteration {iteration} ---")
-        return {"iteration": iteration}
+        return {"ideation_iteration": iteration}
     
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of ideation. "
-        if state["iteration"] > 5 :
+        if state["ideation_iteration"] > 5 :
             stop_statement = "We've done several more rounds of ideation."
         ans = interrupt(
          stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the critic phase? (y/n)")
@@ -149,7 +149,7 @@ class IdeationSubgraph:
         g.add_edge("user_reply_1", "iterater")
         g.add_conditional_edges(
             "iterater",
-            lambda s: "intro_node" if s["iteration"] in [1, 2] else "normal_node",
+            lambda s: "intro_node" if s["ideation_iteration"] in [1, 2] else "normal_node",
             {
                 "intro_node": "facilitator",  # Loop back to facilitator for the first turn to get the initial student ideas before further ideation
                 "normal_node": "router", # After the first turn, route to either idea generation or expansion based on the router's decision
@@ -172,7 +172,7 @@ class IdeationSubgraph:
         g.add_edge("structure", "cleanup")
         g.add_conditional_edges(
             "cleanup",
-            lambda s: "stop?" if (s["iteration"] >= 5 and s["iteration"] % 5 == 0) else "continue",
+            lambda s: "stop?" if (s["ideation_iteration"] >= 5 and s["ideation_iteration"] % 5 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",

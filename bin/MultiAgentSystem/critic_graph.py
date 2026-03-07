@@ -4,7 +4,7 @@ from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
 from pathlib import Path
-from langgraph.checkpoint.memory import InMemorySaver
+
 
 class CriticSubgraph:
     """
@@ -14,7 +14,7 @@ class CriticSubgraph:
         self.facilitator_agent = facilitator_agent
         self.critic_agent = critic_agent
         self.idea_structurer_agent = idea_structurer_agent
-        self.graph = self._build().compile(checkpointer=InMemorySaver()) 
+        self.graph = self._build().compile(checkpointer=True) 
         
     # ---- nodes ----
     def _facilitator_node(self, state: State):
@@ -73,16 +73,16 @@ class CriticSubgraph:
         return {"idea_board": reply}
     
     def _iterater(self, state: State):
-        iteration = state["iteration"] + 1
+        iteration = state[" critic_iteration"] + 1
         print(f"--- Starting iteration {iteration} ---")
-        return {"iteration": iteration}
+        return {" critic_iteration": iteration}
     
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of criticing. "
-        if state["iteration"] > 5 :
+        if state[" critic_iteration"] > 5 :
             stop_statement = "We've done several more rounds of citicising."
         ans = interrupt(
-         stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre yo (y/n)")
+         stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the structuring phase? (y/n)")
         a = str(ans).strip().lower()
 
         yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
@@ -131,7 +131,7 @@ class CriticSubgraph:
         g.add_edge("cleanup", "iterator")
         g.add_conditional_edges(
             "iterator",
-            lambda s: "stop?" if (s["iteration"] >= 2 and s["iteration"] % 2 == 0) else "continue",
+            lambda s: "stop?" if (s[" critic_iteration"] >= 5 and s[" critic_iteration"] % 5 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",

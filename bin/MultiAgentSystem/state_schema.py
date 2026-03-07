@@ -13,7 +13,8 @@ class State(TypedDict):
     subject_specialist_reply: str
     critic_reply: str
     facilitation_done: bool
-    iteration : int
+    ideation_iteration : int
+    critic_iteration : int
     thread_id: str
     essay_topic: str
     route: Route
