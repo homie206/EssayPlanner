@@ -127,7 +127,10 @@ cd bin/MultiAgentSystem
 ```
 
 After run the front end using :
+```bash
 streamlit run front_end.py
+```
+
 
 Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
