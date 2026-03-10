@@ -15,33 +15,43 @@ AGENT_CONFIG = {
     "idea_generator": {
         "label": "Idea Generator",
         "color": "bright_cyan",
+        "emoji": "💡",
+        "st_color": "#00e5ff",
         "state_key": "idea_generator_reply",
-        "render_method": "render_idea_generator"
+        "render_method": "render_idea_generator",
     },
     "subject_specialist": {
         "label": "Subject Specialist",
         "color": "magenta",
+        "emoji": "📚",
+        "st_color": "#e040fb",
         "state_key": "subject_specialist_reply",
-        "render_method": "render_subject_specialist"
+        "render_method": "render_subject_specialist",
     },
     "critic": {
         "label": "Critic",
         "color": "red",
+        "emoji": "⚠️",
+        "st_color": "#ef5350",
         "state_key": "critic_reply",
-        "render_method": "render_critic"
+        "render_method": "render_critic",
     },
     "idea_structurer": {
         "label": "Idea Structurer",
         "color": "yellow",
+        "emoji": "📋",
+        "st_color": "#ffee58",
         "state_key": "idea_board",
-        "render_method": "render_idea_structurer"
+        "render_method": "render_idea_structurer",
     },
     "facilitator": {
         "label": "Facilitator",
         "color": "blue",
+        "emoji": "💬",
+        "st_color": "#42a5f5",
         "state_key": "facilitator_reply",
-        "render_method": "render_facilitator"
-    }
+        "render_method": "render_facilitator",
+    },
 }
 
 

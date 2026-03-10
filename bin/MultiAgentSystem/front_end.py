@@ -1,37 +1,65 @@
+import importlib.util
 import time
+from pathlib import Path
+
 import requests
 import streamlit as st
+
+# Load agent_config.py directly (by file path) to avoid triggering
+# bin/RichUI/__init__.py, which imports heavy orchestrator/agent deps.
+_spec = importlib.util.spec_from_file_location(
+    "agent_config",
+    Path(__file__).resolve().parents[1] / "RichUI" / "agent_config.py",
+)
+_agent_config = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_agent_config)
+AGENT_CONFIG = _agent_config.AGENT_CONFIG
 
 
 st.set_page_config(page_title="MultiAgentSystem UI", layout="centered")
 
 # ----------------------------
+# CSS: color-matched left-border accents per agent
+# ----------------------------
+
+_avatar_css = "\n".join(
+    f'div.stChatMessage:has(img[alt="{cfg["emoji"]}"]) '
+    f'{{ border-left: 4px solid {cfg["st_color"]} !important; padding-left: 0.5rem; }}'
+    for cfg in AGENT_CONFIG.values()
+)
+
+st.markdown(
+    f"<style>\n{_avatar_css}\n</style>",
+    unsafe_allow_html=True,
+)
+
+# ----------------------------
 # Helpers
 # ----------------------------
+
+# Build reverse lookup: state_key -> agent_name
+_STATE_KEY_TO_AGENT = {}
+for _name, _cfg in AGENT_CONFIG.items():
+    _STATE_KEY_TO_AGENT[_cfg["state_key"]] = _name
+    # Also map the _reply key for idea_structurer (its state_key is idea_board)
+    _STATE_KEY_TO_AGENT[f"{_name}_reply"] = _name
+
 
 def post_json(url: str, payload: dict, timeout: int = 60) -> dict:
     r = requests.post(url, json=payload, timeout=timeout)
     r.raise_for_status()
     return r.json()
 
+
 def role_from_key(node: str, key: str) -> str:
-    """
-    Map state keys / nodes to chat roles for display.
-    """
-    if key in {"facilitator_reply"}:
-        return "facilitator"
-    if key in {"idea_generator_reply"}:
-        return "idea_generator"
-    if key in {"subject_specialist_reply"}:
-        return "subject_specialist"
-    if key in {"critic_reply"}:
-        return "critic"
+    """Map state keys / nodes to agent names using AGENT_CONFIG."""
+    if key in _STATE_KEY_TO_AGENT:
+        return _STATE_KEY_TO_AGENT[key]
     return node or "system"
 
+
 def should_display(key: str, value) -> bool:
-    """
-    Only show agent replies (NOT the idea_board).
-    """
+    """Only show agent replies (NOT the idea_board raw value)."""
     if value is None:
         return False
     if isinstance(value, str):
@@ -39,70 +67,30 @@ def should_display(key: str, value) -> bool:
     return False
 
 
-# Color mapping per agent (minimal + clear)
-ROLE_COLORS = {
-    "user": "#FFFFFF",              # default chat bubble styling
-    "facilitator": "#E3F2FD",        # light blue
-    "idea_generator": "#E8F5E9",     # light green
-    "subject_specialist": "#FFF3E0", # light orange
-    "critic": "#FCE4EC",            # light pink
-    "system": "#F5F5F5",           # light grey
-}
-
-# choose which side each agent appears on
-ROLE_SIDE = {
-    "user": "right",
-    "facilitator": "left",
-    "idea_generator": "right",
-    "subject_specialist": "left",
-    "critic": "right",
-    "system": "left",
-}
-
-
-def render_coloured_message(role: str, content: str):
-    """
-    Render a colored bubble aligned left/right.
-    """
-    bg = ROLE_COLORS.get(role, "#F5F5F5")
-    border = "#E0E0E0"
-    text = "#111111"
-    side = ROLE_SIDE.get(role, "left")
-
-    safe = (
-        str(content)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
-
-    justify = "flex-end" if side == "right" else "flex-start"
-    radius = "14px 14px 4px 14px" if side == "right" else "14px 14px 14px 4px"
-
-    html = f"""
-    <div style="display:flex; justify-content:{justify}; margin: 2px 0px 10px 0px;">
-      <div style="
-          max-width: 78%;
-          background: {bg};
-          border: 1px solid {border};
-          padding: 10px 12px;
-          border-radius: {radius};
-          color: {text};
-          line-height: 1.35;
-          white-space: pre-wrap;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-      ">{safe}</div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+def render_chat_message(role: str, content: str):
+    """Render a single chat message using st.chat_message()."""
+    if role == "user":
+        with st.chat_message("user", avatar="✨"):
+            st.markdown(content)
+    else:
+        cfg = AGENT_CONFIG.get(role)
+        if cfg:
+            with st.chat_message(name=cfg["label"], avatar=cfg["emoji"]):
+                st.caption(cfg["label"])
+                st.markdown(content)
+        else:
+            with st.chat_message("assistant"):
+                st.markdown(content)
 
 
 def process_events(resp: dict):
     """
+    Process events from the backend response.
+
     resp:
       {
         "thread_id": "...",
-        "events": [[node,key,value], ...],
+        "events": [[node, key, value], ...],
         "needs_user_input": bool,
         "interrupt_prompt": str|None
       }
@@ -125,6 +113,10 @@ def process_events(resp: dict):
             continue
         st.session_state.last_values[key] = value
 
+        # Track idea_board state in session
+        if key == "idea_board" and value is not None:
+            st.session_state.idea_board = str(value)
+
         # Push displayable agent messages into chat log
         if should_display(str(key), value):
             st.session_state.chat.append(
@@ -144,13 +136,15 @@ if "server_url" not in st.session_state:
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
 if "chat" not in st.session_state:
-    st.session_state.chat = []  # [{"role":..., "content":...}]
+    st.session_state.chat = []
 if "last_values" not in st.session_state:
     st.session_state.last_values = {}
 if "needs_user_input" not in st.session_state:
     st.session_state.needs_user_input = False
 if "interrupt_prompt" not in st.session_state:
     st.session_state.interrupt_prompt = None
+if "idea_board" not in st.session_state:
+    st.session_state.idea_board = None
 
 
 # ----------------------------
@@ -161,12 +155,29 @@ st.title("AI 4 ED")
 
 with st.sidebar:
     st.subheader("Server")
-    st.session_state.server_url = st.text_input("FastAPI base URL", st.session_state.server_url)
+    st.session_state.server_url = st.text_input(
+        "FastAPI base URL", st.session_state.server_url
+    )
     st.caption("Backend should expose: POST /start and POST /message/{thread_id}")
 
     st.markdown("---")
-    st.subheader("Colours")
-    st.caption("Agent message colours are applied to the bubble background.")
+
+    # Idea Board
+    with st.expander("Idea Board", expanded=True):
+        if st.session_state.idea_board:
+            st.markdown(st.session_state.idea_board)
+        else:
+            st.caption("No ideas yet. Start a session to begin.")
+
+    st.markdown("---")
+
+    # Agent legend
+    with st.expander("Agent Roles", expanded=False):
+        st.markdown("✨ **You** — your messages")
+        for cfg in AGENT_CONFIG.values():
+            st.markdown(f'{cfg["emoji"]} **{cfg["label"]}**')
+
+    st.markdown("---")
 
     if st.button("Reset session"):
         st.session_state.thread_id = None
@@ -174,12 +185,13 @@ with st.sidebar:
         st.session_state.last_values = {}
         st.session_state.needs_user_input = False
         st.session_state.interrupt_prompt = None
+        st.session_state.idea_board = None
         st.rerun()
 
 
-# Render chat so far
+# Render chat history
 for msg in st.session_state.chat:
-    render_coloured_message(msg["role"], msg["content"])
+    render_chat_message(msg["role"], msg["content"])
 
 
 # ----------------------------
@@ -194,13 +206,27 @@ if st.session_state.thread_id is None:
 
     if st.button("Start"):
         try:
-            resp = post_json(
-                f"{st.session_state.server_url}/start",
-                {"subject": subject, "essay_topic": essay_topic},
-            )
+            with st.spinner("Agents are thinking..."):
+                resp = post_json(
+                    f"{st.session_state.server_url}/start",
+                    {"subject": subject, "essay_topic": essay_topic},
+                )
             st.session_state.thread_id = resp["thread_id"]
             process_events(resp)
             st.rerun()
+        except requests.ConnectionError:
+            st.error(
+                "Could not connect to the backend server. "
+                "Make sure it is running at: "
+                f"`{st.session_state.server_url}`"
+            )
+            st.info(
+                "Start the backend with:\n\n"
+                "```\n"
+                "uv run uvicorn bin.MultiAgentSystem.app:app "
+                "--reload --host 127.0.0.1 --port 8000\n"
+                "```"
+            )
         except requests.RequestException as e:
             st.error(f"Failed to start session: {e}")
 
@@ -217,16 +243,25 @@ if st.session_state.needs_user_input and st.session_state.interrupt_prompt:
 user_text = st.chat_input("Type your reply here")
 
 if user_text:
-    # Show user message immediately
     st.session_state.chat.append({"role": "user", "content": user_text})
 
+    # Show the user's message immediately before waiting for agents
+    render_chat_message("user", user_text)
+
     try:
-        resp = post_json(
-            f"{st.session_state.server_url}/message/{st.session_state.thread_id}",
-            {"message": user_text},
-        )
+        with st.spinner("Agents are thinking..."):
+            resp = post_json(
+                f"{st.session_state.server_url}/message/{st.session_state.thread_id}",
+                {"message": user_text},
+            )
         process_events(resp)
         time.sleep(0.05)
         st.rerun()
+    except requests.ConnectionError:
+        st.error(
+            "Lost connection to the backend server. "
+            "Check that it is still running at: "
+            f"`{st.session_state.server_url}`"
+        )
     except requests.RequestException as e:
         st.error(f"Failed to send message: {e}")
