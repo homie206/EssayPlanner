@@ -18,20 +18,6 @@ AGENT_CONFIG = _agent_config.AGENT_CONFIG
 
 st.set_page_config(page_title="MultiAgentSystem UI", layout="centered")
 
-# ----------------------------
-# CSS: color-matched left-border accents per agent
-# ----------------------------
-
-_avatar_css = "\n".join(
-    f'div.stChatMessage:has(img[alt="{cfg["emoji"]}"]) '
-    f'{{ border-left: 4px solid {cfg["st_color"]} !important; padding-left: 0.5rem; }}'
-    for cfg in AGENT_CONFIG.values()
-)
-
-st.markdown(
-    f"<style>\n{_avatar_css}\n</style>",
-    unsafe_allow_html=True,
-)
 
 # ----------------------------
 # Helpers
@@ -76,8 +62,16 @@ def render_chat_message(role: str, content: str):
         cfg = AGENT_CONFIG.get(role)
         if cfg:
             with st.chat_message(name=cfg["label"], avatar=cfg["emoji"]):
-                st.caption(cfg["label"])
-                st.markdown(content)
+                st.markdown(
+                    f'<div style="'
+                    f'background:{cfg["bg_color"]};'
+                    f'border-left:4px solid {cfg["st_color"]};'
+                    f'border-radius:0.4rem;'
+                    f'padding:0.6rem 0.8rem;'
+                    f'margin:-0.25rem 0">'
+                    f'{content}</div>',
+                    unsafe_allow_html=True,
+                )
         else:
             with st.chat_message("assistant"):
                 st.markdown(content)
@@ -175,7 +169,16 @@ with st.sidebar:
     with st.expander("Agent Roles", expanded=False):
         st.markdown("✨ **You** — your messages")
         for cfg in AGENT_CONFIG.values():
-            st.markdown(f'{cfg["emoji"]} **{cfg["label"]}**')
+            swatch = (
+                f'<span style="display:inline-block;width:12px;height:12px;'
+                f'border-radius:3px;background:{cfg["bg_color"]};'
+                f'border:2px solid {cfg["st_color"]};vertical-align:middle;'
+                f'margin-right:6px;"></span>'
+            )
+            st.markdown(
+                f'{swatch}{cfg["emoji"]} **{cfg["label"]}**',
+                unsafe_allow_html=True,
+            )
 
     st.markdown("---")
 

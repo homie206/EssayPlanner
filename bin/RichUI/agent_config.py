@@ -16,7 +16,8 @@ AGENT_CONFIG = {
         "label": "Idea Generator",
         "color": "bright_cyan",
         "emoji": "💡",
-        "st_color": "#00e5ff",
+        "st_color": "#00bcd4",           # cyan
+        "bg_color": "rgba(0,188,212,0.15)",
         "state_key": "idea_generator_reply",
         "render_method": "render_idea_generator",
     },
@@ -24,7 +25,8 @@ AGENT_CONFIG = {
         "label": "Subject Specialist",
         "color": "magenta",
         "emoji": "📚",
-        "st_color": "#e040fb",
+        "st_color": "#9c27b0",           # purple
+        "bg_color": "rgba(156,39,176,0.15)",
         "state_key": "subject_specialist_reply",
         "render_method": "render_subject_specialist",
     },
@@ -32,7 +34,8 @@ AGENT_CONFIG = {
         "label": "Critic",
         "color": "red",
         "emoji": "⚠️",
-        "st_color": "#ef5350",
+        "st_color": "#f44336",           # red
+        "bg_color": "rgba(244,67,54,0.15)",
         "state_key": "critic_reply",
         "render_method": "render_critic",
     },
@@ -40,7 +43,8 @@ AGENT_CONFIG = {
         "label": "Idea Structurer",
         "color": "yellow",
         "emoji": "📋",
-        "st_color": "#ffee58",
+        "st_color": "#f9a825",           # amber
+        "bg_color": "rgba(249,168,37,0.15)",
         "state_key": "idea_board",
         "render_method": "render_idea_structurer",
     },
@@ -48,7 +52,8 @@ AGENT_CONFIG = {
         "label": "Facilitator",
         "color": "blue",
         "emoji": "💬",
-        "st_color": "#42a5f5",
+        "st_color": "#3f51b5",           # indigo — clearly distinct from cyan
+        "bg_color": "rgba(63,81,181,0.15)",
         "state_key": "facilitator_reply",
         "render_method": "render_facilitator",
     },
@@ -56,7 +61,8 @@ AGENT_CONFIG = {
         "label": "Structuring Coach",
         "color": "green",
         "emoji": "🗂️",
-        "st_color": "#66bb6a",
+        "st_color": "#4caf50",           # green
+        "bg_color": "rgba(76,175,80,0.15)",
         "state_key": "structuring_coach_reply",
         "render_method": "render_structuring_coach",
     },
@@ -64,7 +70,8 @@ AGENT_CONFIG = {
         "label": "Argument Flow",
         "color": "yellow",
         "emoji": "🔗",
-        "st_color": "#ffa726",
+        "st_color": "#ff5722",           # deep orange
+        "bg_color": "rgba(255,87,34,0.15)",
         "state_key": "argument_flow_reply",
         "render_method": "render_argument_flow",
     },
