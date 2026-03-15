@@ -73,13 +73,13 @@ class CriticSubgraph:
         return {"idea_board": reply}
     
     def _iterater(self, state: State):
-        iteration = state[" critic_iteration"] + 1
+        iteration = state["critic_iteration"] + 1
         print(f"--- Starting iteration {iteration} ---")
-        return {" critic_iteration": iteration}
+        return {"critic_iteration": iteration}
     
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of criticing. "
-        if state[" critic_iteration"] > 5 :
+        if state["critic_iteration"] > 5 :
             stop_statement = "We've done several more rounds of citicising."
         ans = interrupt(
          stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the structuring phase? (y/n)")
@@ -89,7 +89,9 @@ class CriticSubgraph:
         #no = a in {"n", "no", "nope", "not yet", "later", "keep going", "continue ideation"}
     
         if yes:
-            return {"done": True}
+            return {"criticising_done": True}
+        
+        return {"criticising_done": False}
     
     def save_mermaid_png(self, output_file_path: str = "ideation_subgraph.png") -> str:
         """
@@ -131,7 +133,7 @@ class CriticSubgraph:
         g.add_edge("cleanup", "iterator")
         g.add_conditional_edges(
             "iterator",
-            lambda s: "stop?" if (s[" critic_iteration"] >= 5 and s[" critic_iteration"] % 5 == 0) else "continue",
+            lambda s: "stop?" if (s["critic_iteration"] >= 5 and s["critic_iteration"] % 5 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",
@@ -139,7 +141,7 @@ class CriticSubgraph:
         )
         g.add_conditional_edges(
             "stop_condition",
-            lambda s: s["criticisng_done"],
+            lambda s: s["criticising_done"],
             {
                 True: END,
                 False: "facilitator",   

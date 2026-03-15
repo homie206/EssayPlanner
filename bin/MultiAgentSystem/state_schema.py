@@ -12,6 +12,8 @@ class State(TypedDict):
     idea_generator_reply: str
     subject_specialist_reply: str
     critic_reply: str
+    structuring_coach_reply: str
+    argument_flow_reply: str
     facilitation_done: bool
     ideation_iteration : int
     critic_iteration : int
@@ -19,5 +21,5 @@ class State(TypedDict):
     thread_id: str
     essay_topic: str
     route: Route
-    criticisng_done : bool
+    criticising_done : bool
     structuring_done : bool

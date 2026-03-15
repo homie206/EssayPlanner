@@ -45,6 +45,8 @@ class RichConsoleUI:
             "idea_generator_reply": "",
             "subject_specialist_reply": "",
             "critic_reply": "",
+            "structuring_coach_reply": "",
+            "argument_flow_reply": "",
             "iteration": 0,
             "thread_id": self.thread_id
         }

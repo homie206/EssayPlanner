@@ -226,6 +226,39 @@ The Facilitator will help you brainstorm ideas and structure your essay.
             expand=False
         ))
 
+    def render_structuring_coach(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display a structuring coach message in a green panel.
+        """
+        border_style = "dim green" if dimmed else "green"
+        title_style = "[dim green]Structuring Coach[/dim green]" if dimmed else "[green]Structuring Coach[/green]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
+
+    def render_argument_flow(self, message: str, dimmed: bool = False) -> None:
+        """
+        Display an argument flow message in an orange panel.
+        """
+        border_style = "dim yellow" if dimmed else "yellow"
+        title_style = "[dim yellow]Argument Flow[/dim yellow]" if dimmed else "[yellow]Argument Flow[/yellow]"
+
+        self.console.print(Panel(
+            message,
+            title=title_style,
+            title_align="left",
+            border_style=border_style,
+            padding=(0, 1),
+            expand=False
+        ))
+
     @contextmanager
     def show_spinner_while_processing(self):
         """

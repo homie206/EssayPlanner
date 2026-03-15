@@ -45,6 +45,8 @@ def make_initial_state(thread_id: str, subject: str, essay_topic: str) -> State:
         "idea_generator_reply": "",
         "subject_specialist_reply": "",
         "critic_reply": "",
+        "structuring_coach_reply": "",
+        "argument_flow_reply": "",
         "facilitation_done": False,
         "ideation_iteration": 1,
         "critic_iteration": 1,

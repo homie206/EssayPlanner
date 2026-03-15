@@ -26,7 +26,7 @@ class StructuringSubgraph:
             thread_id=state["thread_id"],
         )
 
-        return {"facilitator_reply": reply}
+        return {"structuring_coach_reply": reply}
 
 
     def _user_node(self, state: State):
@@ -50,7 +50,7 @@ class StructuringSubgraph:
             thread_id=state["thread_id"],
         )
 
-        return {"structures": [reply]}
+        return {"argument_flow_reply": reply}
 
 
     def _iteration_node(self, state: State):
