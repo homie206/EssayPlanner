@@ -40,7 +40,8 @@ class RichConsoleUI:
             "idea_board": "",
             "structures": [],
             "subject": subject,
-            "user_message": "",
+            "latest_user_message": "",
+            "turn_user_messages": [],
             "facilitator_reply": "",
             "idea_generator_reply": "",
             "subject_specialist_reply": "",
@@ -51,8 +52,7 @@ class RichConsoleUI:
 
         # Create agents and MAS graph
         with self.display_renderer.show_agent_thinking("System", "cyan"):
-            facilitator, idea_generator, subject_specialist, idea_structurer, critic = create_all_agents(self.state)
-            self.mas = build_mas_graph(idea_generator, facilitator, idea_structurer, subject_specialist, critic)
+            self.mas = build_mas_graph(self.subject)
 
     def run(self) -> None:
         """
@@ -118,7 +118,7 @@ class RichConsoleUI:
         self.display_renderer.render_user_message(user_message)
 
         # Update state with user message
-        self.state["user_message"] = user_message
+        self.state["latest_user_message"] = user_message
 
         # Stream agent responses as they complete
         try:

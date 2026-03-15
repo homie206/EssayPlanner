@@ -34,11 +34,21 @@ class IdeationSubgraph:
         # End-of-turn: stop here and wait for resume
         user_reply = interrupt("Facilitator: " + reply)
 
+        # Simple heuristic: facilitator decides when ideation is complete
+        done_ideating = False
+        if "move to structuring" in reply.lower() or "ready to structure" in reply.lower():
+            done_ideating = True
+
         messages = state.get("turn_user_messages", [])
         messages.append(user_reply)
 
         # When resumed, interrupt(...) returns the user's response
-        return {"facilitator_reply": reply, "latest_user_message": user_reply, "turn_user_messages": messages}
+        return {
+            "facilitator_reply": reply,
+            "latest_user_message": user_reply,
+            "turn_user_messages": messages,
+            "done_ideating": done_ideating,
+        }
     def _routing_node(self, state: State) -> dict:
         reply = chat(
             self.router_agent,
@@ -138,7 +148,10 @@ class IdeationSubgraph:
         g.add_edge("idea_generation", "structure")
         g.add_edge("idea_expansion", "structure")
         g.add_edge("structure", "cleanup")
-        g.add_edge("cleanup", "facilitator")
+        g.add_conditional_edges(
+            "cleanup",
+            lambda s: END if s.get("done_ideating") else "facilitator",
+        )
 
 
         return g
