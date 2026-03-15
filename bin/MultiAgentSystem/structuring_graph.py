@@ -7,7 +7,8 @@ from .state_schema import State
 
 class StructuringSubgraph:
 
-    def __init__(self, structuring_coach_agent, argument_flow_agent):
+    def __init__(self, facilitator_agent, structuring_coach_agent, argument_flow_agent):
+        self.facilitator_agent = facilitator_agent
         self.structuring_coach_agent = structuring_coach_agent
         self.argument_flow_agent = argument_flow_agent
 
@@ -18,25 +19,48 @@ class StructuringSubgraph:
     # Nodes
     # -------------------------
 
-    def _coach_node(self, state: State):
+    def _facilitator_node(self, state: State):
+
+        facilitator_input = (
+            f"Idea board:\n{state.get('idea_board', '')}\n\n"
+            f"Student's last message:\n{state.get('latest_user_message', '')}\n\n"
+            f"Structuring coach's last suggestion:\n{state.get('structuring_coach_reply', '')}\n\n"
+            f"Argument flow proposal:\n{state.get('argument_flow_reply', '')}"
+        )
 
         reply = chat(
-            self.structuring_coach_agent,
-            "Idea board:\n" + state["idea_board"],
+            self.facilitator_agent,
+            facilitator_input,
             thread_id=state["thread_id"],
         )
 
-        return {"structuring_coach_reply": reply}
+        return {"facilitator_reply": reply}
 
 
     def _user_node(self, state: State):
 
-        user_reply = interrupt("How would you like to organise these ideas into an essay structure?")
+        user_reply = interrupt("Your turn:")
 
         messages = state.get("turn_user_messages", [])
         messages.append(user_reply)
 
         return {"latest_user_message": user_reply, "turn_user_messages": messages}
+
+
+    def _coach_node(self, state: State):
+
+        coach_input = (
+            f"Idea board:\n{state.get('idea_board', '')}\n\n"
+            f"Student's thoughts:\n{state.get('latest_user_message', '')}"
+        )
+
+        reply = chat(
+            self.structuring_coach_agent,
+            coach_input,
+            thread_id=state["thread_id"],
+        )
+
+        return {"structuring_coach_reply": reply}
 
 
     def _argument_flow_node(self, state: State):
@@ -63,8 +87,8 @@ class StructuringSubgraph:
     def stop_condition(self, state: State):
 
         ans = interrupt(
-            "Here is the current structure:\n"
-            + "\n".join(state["structures"])
+            "Here is the argument flow proposal:\n"
+            + state.get("argument_flow_reply", "")
             + "\n\nAre you happy with this structure? (y/n)"
         )
 
@@ -75,6 +99,8 @@ class StructuringSubgraph:
         if yes:
             return {"structuring_done": True}
 
+        return {"structuring_done": False}
+
 
     # -------------------------
     # Graph Builder
@@ -84,15 +110,17 @@ class StructuringSubgraph:
 
         g = StateGraph(State)
 
-        g.add_node("coach", self._coach_node)
+        g.add_node("facilitator", self._facilitator_node)
         g.add_node("user", self._user_node)
+        g.add_node("coach", self._coach_node)
         g.add_node("argument_flow", self._argument_flow_node)
         g.add_node("iterator", self._iteration_node)
         g.add_node("stop_condition", self.stop_condition)
 
-        g.add_edge(START, "coach")
-        g.add_edge("coach", "user")
-        g.add_edge("user", "argument_flow")
+        g.add_edge(START, "facilitator")
+        g.add_edge("facilitator", "user")
+        g.add_edge("user", "coach")
+        g.add_edge("coach", "argument_flow")
         g.add_edge("argument_flow", "iterator")
 
         g.add_conditional_edges(
@@ -100,7 +128,7 @@ class StructuringSubgraph:
             lambda s: "stop?" if s["structuring_iteration"] >= 3 else "continue",
             {
                 "stop?": "stop_condition",
-                "continue": "coach",
+                "continue": "facilitator",
             },
         )
 
@@ -109,7 +137,7 @@ class StructuringSubgraph:
             lambda s: s["structuring_done"],
             {
                 True: END,
-                False: "coach",
+                False: "facilitator",
             },
         )
 

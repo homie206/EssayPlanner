@@ -15,8 +15,9 @@ class PlanningModule:
       - exposes a streaming loop similar to your multiagent_chat_once()
     """
     def __init__(self,idea_generator_agent,facilitator_agent_ideation,idea_structurer_agent,subject_specialist_agent,
-                 critic_agent, router_agent, facilitator_agent_critic, structuring_coach_agent, argument_flow_agent):
-        
+                 critic_agent, router_agent, facilitator_agent_critic, structuring_coach_agent, argument_flow_agent,
+                 facilitator_agent_structuring):
+
         # Agents
         self.idea_generator_agent = idea_generator_agent
         self.facilitator_agent_ideation = facilitator_agent_ideation
@@ -27,6 +28,7 @@ class PlanningModule:
         self.facilitator_agent_critic = facilitator_agent_critic
         self.structuring_coach_agent = structuring_coach_agent
         self.argument_flow_agent = argument_flow_agent
+        self.facilitator_agent_structuring = facilitator_agent_structuring
 
         # Ideation Subgraph
         self.ideation = IdeationSubgraph(
@@ -46,6 +48,7 @@ class PlanningModule:
 
         # Structuring Subgraph
         self.structuring = StructuringSubgraph(
+            self.facilitator_agent_structuring,
             self.structuring_coach_agent,
             self.argument_flow_agent
         )

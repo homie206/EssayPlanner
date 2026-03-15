@@ -52,6 +52,22 @@ AGENT_CONFIG = {
         "state_key": "facilitator_reply",
         "render_method": "render_facilitator",
     },
+    "structuring_coach": {
+        "label": "Structuring Coach",
+        "color": "green",
+        "emoji": "🗂️",
+        "st_color": "#66bb6a",
+        "state_key": "structuring_coach_reply",
+        "render_method": "render_structuring_coach",
+    },
+    "argument_flow": {
+        "label": "Argument Flow",
+        "color": "yellow",
+        "emoji": "🔗",
+        "st_color": "#ffa726",
+        "state_key": "argument_flow_reply",
+        "render_method": "render_argument_flow",
+    },
 }
 
 

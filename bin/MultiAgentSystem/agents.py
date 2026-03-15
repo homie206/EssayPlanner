@@ -47,6 +47,10 @@ def create_all_agents(state: State):
     router_prompt = build_prompt_for_agent("Router", state["subject"])
     router_agent = create_agent(router_prompt, model_name="gpt-5")
     
+    # Facilitator Structuring
+    facilitator_structuring_prompt = build_prompt_for_agent("FacilitatorStructuring", state["subject"])
+    facilitator_agent_structuring = create_agent(facilitator_structuring_prompt)
+
     # Structuring Coach
     structuring_prompt = build_prompt_for_agent("StructuringCoach", state["subject"])
     structuring_coach_agent = create_agent(structuring_prompt)
@@ -64,5 +68,6 @@ def create_all_agents(state: State):
         router_agent,
         facilitator_agent_critic,
         structuring_coach_agent,
-        argument_flow_agent
+        argument_flow_agent,
+        facilitator_agent_structuring,
     )
