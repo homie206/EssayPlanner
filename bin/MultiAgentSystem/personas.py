@@ -406,7 +406,27 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
     "Student: 'Expand the point about personalization with an example.' -> idea_expansion\n"
     "Student: 'Lets expand on this idea of personalization with an example.' -> idea_expansion\n"
     "Student: 'Ok thanks' -> none\n"
-))
+)),
+"StructuringCoach": AgentPersona(
+    name="StructuringCoach",
+    visible_to_student=True,
+    stages=["structuring"],
+    base_prompt=(
+        "You help the student organise their ideas into an essay structure.\n"
+        "Focus on introduction, body paragraphs, and conclusion.\n"
+        "Ask questions that help the student decide what belongs where."
+    )
+),
+
+"ArgumentFlow": AgentPersona(
+    name="ArgumentFlow",
+    visible_to_student=True,
+    stages=["structuring"],
+    base_prompt=(
+        "You analyse the student's ideas and propose logical argument flow.\n"
+        "Suggest how paragraphs should connect and build the argument."
+    )
+),
 }
 
 def get_agent(name: str) -> AgentPersona:

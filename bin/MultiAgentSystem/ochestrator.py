@@ -2,6 +2,7 @@ from .state_schema import State
 from .llm_connector import chat
 from .idea_gen_graph import IdeationSubgraph
 from .critic_graph import CriticSubgraph
+from .structuring_graph import StructuringSubgraph
 from langgraph.types import Command, interrupt
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
@@ -14,7 +15,7 @@ class PlanningModule:
       - exposes a streaming loop similar to your multiagent_chat_once()
     """
     def __init__(self,idea_generator_agent,facilitator_agent_ideation,idea_structurer_agent,subject_specialist_agent,
-                 critic_agent, router_agent, facilitator_agent_critic):
+                 critic_agent, router_agent, facilitator_agent_critic, structuring_coach_agent, argument_flow_agent):
         
         # Agents
         self.idea_generator_agent = idea_generator_agent
@@ -24,6 +25,8 @@ class PlanningModule:
         self.critic_agent = critic_agent
         self.router_agent = router_agent
         self.facilitator_agent_critic = facilitator_agent_critic
+        self.structuring_coach_agent = structuring_coach_agent
+        self.argument_flow_agent = argument_flow_agent
 
         # Ideation Subgraph
         self.ideation = IdeationSubgraph(
@@ -39,6 +42,12 @@ class PlanningModule:
             self.facilitator_agent_critic,
             critic_agent,
             idea_structurer_agent
+        )
+
+        # Structuring Subgraph
+        self.structuring = StructuringSubgraph(
+            self.structuring_coach_agent,
+            self.argument_flow_agent
         )
 
         # Planning module graph (compiled)
@@ -63,9 +72,13 @@ class PlanningModule:
         # critic subgraph
         gb.add_node("critic", self.critic.graph)
 
+        # structuring subgraph
+        gb.add_node("structuring", self.structuring.graph)
+
         gb.add_edge(START, "ideation")
         gb.add_edge("ideation", "critic")
-        gb.add_edge("critic", END)
+        gb.add_edge("critic", "structuring")
+        gb.add_edge("structuring", END)
 
         return gb
     

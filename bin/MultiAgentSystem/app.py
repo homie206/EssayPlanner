@@ -48,10 +48,12 @@ def make_initial_state(thread_id: str, subject: str, essay_topic: str) -> State:
         "facilitation_done": False,
         "ideation_iteration": 1,
         "critic_iteration": 1,
+        "structuring_iteration": 1,
         "thread_id": thread_id,
         "essay_topic": essay_topic,
         "route": "none",
         "done": False,
+        "structuring_done": False,
     }   
 
 
@@ -86,7 +88,7 @@ def start(req: StartReq):
     thread_id = str(uuid.uuid4())
     state = make_initial_state(thread_id, req.subject, req.essay_topic)
 
-    facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic = create_all_agents(state)
+    facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic, structuring_coach, argument_flow = create_all_agents(state)
     mas = PlanningModule(
         idea_generator_agent=idea_generator,
         facilitator_agent_ideation=facilitator_ideation,
@@ -94,7 +96,9 @@ def start(req: StartReq):
         subject_specialist_agent=subject_specialist,
         critic_agent=critic,
         router_agent=router,
-        facilitator_agent_critic=facilitator_agent_critic
+        facilitator_agent_critic=facilitator_agent_critic,
+        structuring_coach_agent=structuring_coach,
+        argument_flow_agent=argument_flow
     )
 
     SESSIONS[thread_id] = {"mas": mas, "state": state}

@@ -15,7 +15,9 @@ class State(TypedDict):
     facilitation_done: bool
     ideation_iteration : int
     critic_iteration : int
+    structuring_iteration : int
     thread_id: str
     essay_topic: str
     route: Route
     criticisng_done : bool
+    structuring_done : bool
