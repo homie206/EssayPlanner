@@ -69,6 +69,10 @@ def render_chat_message(role: str, content: str):
                     f'border-radius:0.4rem;'
                     f'padding:0.6rem 0.8rem;'
                     f'margin:-0.25rem 0">'
+                    f'<p style="margin:0 0 0.3rem 0;font-size:0.75rem;'
+                    f'font-weight:700;color:{cfg["st_color"]};'
+                    f'text-transform:uppercase;letter-spacing:0.05em">'
+                    f'{cfg["emoji"]} {cfg["label"]}</p>'
                     f'{content}</div>',
                     unsafe_allow_html=True,
                 )
@@ -156,17 +160,8 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Idea Board
-    with st.expander("Idea Board", expanded=True):
-        if st.session_state.idea_board:
-            st.markdown(st.session_state.idea_board)
-        else:
-            st.caption("No ideas yet. Start a session to begin.")
-
-    st.markdown("---")
-
     # Agent legend
-    with st.expander("Agent Roles", expanded=False):
+    with st.expander("Agent Roles", expanded=True):
         st.markdown("✨ **You** — your messages")
         for cfg in AGENT_CONFIG.values():
             swatch = (
@@ -179,6 +174,15 @@ with st.sidebar:
                 f'{swatch}{cfg["emoji"]} **{cfg["label"]}**',
                 unsafe_allow_html=True,
             )
+
+    st.markdown("---")
+
+    # Idea Board
+    with st.expander("Idea Board", expanded=True):
+        if st.session_state.idea_board:
+            st.markdown(st.session_state.idea_board)
+        else:
+            st.caption("No ideas yet. Start a session to begin.")
 
     st.markdown("---")
 
