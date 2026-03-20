@@ -31,7 +31,7 @@ for _name, _cfg in AGENT_CONFIG.items():
     _STATE_KEY_TO_AGENT[f"{_name}_reply"] = _name
 
 
-def post_json(url: str, payload: dict, timeout: int = 60) -> dict:
+def post_json(url: str, payload: dict, timeout: int = 300) -> dict:
     r = requests.post(url, json=payload, timeout=timeout)
     r.raise_for_status()
     return r.json()
