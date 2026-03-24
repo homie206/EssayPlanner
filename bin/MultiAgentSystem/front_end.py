@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import time
 from pathlib import Path
 
@@ -130,7 +131,7 @@ def process_events(resp: dict):
 # ----------------------------
 
 if "server_url" not in st.session_state:
-    st.session_state.server_url = "http://127.0.0.1:8000"
+    st.session_state.server_url = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
 if "chat" not in st.session_state:
