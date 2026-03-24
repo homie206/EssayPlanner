@@ -14,7 +14,6 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY pyproject.toml uv.lock ./
 COPY bin/ ./bin/
-COPY main.py ./
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1

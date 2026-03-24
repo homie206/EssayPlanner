@@ -134,6 +134,27 @@ streamlit run front_end.py
 
 Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
+**Option 5: Docker (recommended for deployment)**
+
+Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+
+1. Copy the example env file and fill in your API keys:
+```bash
+cp .env.example .env
+```
+
+2. Build and start both services:
+```bash
+docker compose up --build
+```
+
+The backend will be available at `http://localhost:8000` and the frontend at `http://localhost:8501`.
+
+To stop:
+```bash
+docker compose down
+```
+
 #### Project Structure
 
 ```
