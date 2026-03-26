@@ -59,7 +59,7 @@ def should_display(key: str, value) -> bool:
 def render_chat_message(role: str, content: str):
     """Render a single chat message using st.chat_message()."""
     if role == "user":
-        with st.chat_message("user", avatar="✨"):
+        with st.chat_message("user", avatar="🧑‍🎓"):
             st.markdown(content)
     else:
         cfg = AGENT_CONFIG.get(role)

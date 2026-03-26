@@ -172,7 +172,7 @@ class CriticSubgraph:
         g.add_edge("cleanup", "iterator")
         g.add_conditional_edges(
             "iterator",
-            lambda s: "stop?" if (s["critic_iteration"] >= 5 and s["critic_iteration"] % 5 == 0) else "continue",
+            lambda s: "stop?" if (s["critic_iteration"] >= 4 and s["critic_iteration"] % 4 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",
