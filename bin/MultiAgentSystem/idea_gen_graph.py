@@ -128,7 +128,7 @@ class IdeationSubgraph:
         if state["ideation_iteration"] > 5 :
             stop_statement = "We've done several more rounds of ideation."
         ans = interrupt(
-         stop_statement + "[YES_NO] Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the critic phase?")
+         stop_statement + "\n\n[YES_NO] Here is the idea board so far:\n\n" + state["idea_board"] + "\n\nAre you happy to move on to the critic phase?")
         a = str(ans).strip().lower()
 
         yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
