@@ -24,6 +24,8 @@ st.set_page_config(page_title="MultiAgentSystem UI", layout="centered")
 # Helpers
 # ----------------------------
 
+YES_NO_MARKER = "[YES_NO]"
+
 # Build reverse lookup: state_key -> agent_name
 _STATE_KEY_TO_AGENT = {}
 for _name, _cfg in AGENT_CONFIG.items():
@@ -82,6 +84,66 @@ def render_chat_message(role: str, content: str):
                 st.markdown(content)
 
 
+def extract_interrupt_prompt(value) -> str:
+    """
+    Extract a readable prompt from an interrupt payload.
+
+    Supports:
+    - plain strings
+    - dicts like {"prompt": "..."}
+    - LangGraph-like dicts such as {"value": "..."} or {"value": {"prompt": "..."}}
+    """
+    if isinstance(value, dict):
+        raw_value = value.get("value", value)
+
+        if isinstance(raw_value, dict):
+            if "prompt" in raw_value:
+                return str(raw_value["prompt"])
+            return str(raw_value)
+
+        return str(raw_value)
+
+    return str(value)
+
+
+def is_yes_no_interrupt(prompt: str | None) -> bool:
+    """Return True if the interrupt prompt is marked as a Yes/No confirmation."""
+    if not prompt:
+        return False
+    return YES_NO_MARKER in prompt
+
+
+def clean_interrupt_prompt(prompt: str | None) -> str:
+    """Remove the Yes/No marker before showing the prompt to the user."""
+    if not prompt:
+        return ""
+    return prompt.replace(YES_NO_MARKER, "").strip()
+
+
+def send_user_message(message: str, show_in_chat: bool = True):
+    """Send a user message to the backend and process the response."""
+    if show_in_chat:
+        st.session_state.chat.append({"role": "user", "content": message})
+
+    try:
+        with st.spinner("Agents are thinking..."):
+            resp = post_json(
+                f"{st.session_state.server_url}/message/{st.session_state.thread_id}",
+                {"message": message},
+            )
+        process_events(resp)
+        time.sleep(0.05)
+        st.rerun()
+    except requests.ConnectionError:
+        st.error(
+            "Lost connection to the backend server. "
+            "Check that it is still running at: "
+            f"`{st.session_state.server_url}`"
+        )
+    except requests.RequestException as e:
+        st.error(f"Failed to send message: {e}")
+
+
 def process_events(resp: dict):
     """
     Process events from the backend response.
@@ -95,15 +157,22 @@ def process_events(resp: dict):
       }
     """
     events = resp.get("events", [])
+    found_interrupt = False
+
     for e in events:
         if not (isinstance(e, (list, tuple)) and len(e) == 3):
             continue
+
         node, key, value = e
 
-        # Interrupt event
-        if node == "__interrupt__":
+        # Interrupt handling
+        if key == "__interrupt__" or node == "__interrupt__":
+            found_interrupt = True
+            prompt = extract_interrupt_prompt(value)
+
             st.session_state.needs_user_input = True
-            st.session_state.interrupt_prompt = str(value)
+            st.session_state.interrupt_prompt = prompt
+            st.session_state.show_yes_no = is_yes_no_interrupt(prompt)
             continue
 
         # Avoid duplicate displays
@@ -122,8 +191,24 @@ def process_events(resp: dict):
                 {"role": role_from_key(str(node), str(key)), "content": str(value)}
             )
 
-    st.session_state.needs_user_input = bool(resp.get("needs_user_input", False))
-    st.session_state.interrupt_prompt = resp.get("interrupt_prompt")
+    # Fallback to top-level response fields if no interrupt event was found
+    if not found_interrupt:
+        st.session_state.needs_user_input = bool(resp.get("needs_user_input", False))
+
+        fallback_prompt = resp.get("interrupt_prompt")
+        if fallback_prompt:
+            st.session_state.interrupt_prompt = str(fallback_prompt)
+            st.session_state.show_yes_no = is_yes_no_interrupt(
+                st.session_state.interrupt_prompt
+            )
+        else:
+            st.session_state.interrupt_prompt = None
+            st.session_state.show_yes_no = False
+
+    # If the backend says no user input is needed anymore, clear interrupt UI state
+    if not st.session_state.needs_user_input:
+        st.session_state.interrupt_prompt = None
+        st.session_state.show_yes_no = False
 
 
 # ----------------------------
@@ -142,6 +227,8 @@ if "needs_user_input" not in st.session_state:
     st.session_state.needs_user_input = False
 if "interrupt_prompt" not in st.session_state:
     st.session_state.interrupt_prompt = None
+if "show_yes_no" not in st.session_state:
+    st.session_state.show_yes_no = False
 if "idea_board" not in st.session_state:
     st.session_state.idea_board = None
 
@@ -193,6 +280,7 @@ with st.sidebar:
         st.session_state.last_values = {}
         st.session_state.needs_user_input = False
         st.session_state.interrupt_prompt = None
+        st.session_state.show_yes_no = False
         st.session_state.idea_board = None
         st.rerun()
 
@@ -245,31 +333,33 @@ if st.session_state.thread_id is None:
 # Active session flow
 # ----------------------------
 
-if st.session_state.needs_user_input and st.session_state.interrupt_prompt:
-    st.info(st.session_state.interrupt_prompt)
+# Show Yes/No buttons only for prompts marked with <<YES_NO>>
+if st.session_state.show_yes_no and st.session_state.interrupt_prompt:
+    st.info(clean_interrupt_prompt(st.session_state.interrupt_prompt))
+
+    col1, col2 = st.columns(2)
+
+    if col1.button("Yes", use_container_width=True, key="yes_button"):
+        st.session_state.show_yes_no = False
+        st.session_state.interrupt_prompt = None
+        send_user_message("yes", show_in_chat=False)
+
+    if col2.button("No", use_container_width=True, key="no_button"):
+        st.session_state.show_yes_no = False
+        st.session_state.interrupt_prompt = None
+        send_user_message("no", show_in_chat=False)
+
+    st.stop()
+
+# For other interrupts, show the prompt and keep normal text input available
+if (
+    st.session_state.needs_user_input
+    and st.session_state.interrupt_prompt
+    and not st.session_state.show_yes_no
+):
+    st.info(clean_interrupt_prompt(st.session_state.interrupt_prompt))
 
 user_text = st.chat_input("Type your reply here")
 
 if user_text:
-    st.session_state.chat.append({"role": "user", "content": user_text})
-
-    # Show the user's message immediately before waiting for agents
-    render_chat_message("user", user_text)
-
-    try:
-        with st.spinner("Agents are thinking..."):
-            resp = post_json(
-                f"{st.session_state.server_url}/message/{st.session_state.thread_id}",
-                {"message": user_text},
-            )
-        process_events(resp)
-        time.sleep(0.05)
-        st.rerun()
-    except requests.ConnectionError:
-        st.error(
-            "Lost connection to the backend server. "
-            "Check that it is still running at: "
-            f"`{st.session_state.server_url}`"
-        )
-    except requests.RequestException as e:
-        st.error(f"Failed to send message: {e}")
+    send_user_message(user_text)

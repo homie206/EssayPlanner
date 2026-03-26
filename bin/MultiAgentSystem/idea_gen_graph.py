@@ -116,7 +116,7 @@ class IdeationSubgraph:
         if not (wants_move and wants_target):
             return {"facilitation_done": False}
     
-        ans = interrupt("Are you sure you want to move on to the structuring phase? (y/n)")
+        ans = interrupt("[YES_NO] Are you sure you want to move on to the structuring phase?")
         confirmed = str(ans).strip().lower() in {
             "y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "continue"
         }
@@ -128,7 +128,7 @@ class IdeationSubgraph:
         if state["ideation_iteration"] > 5 :
             stop_statement = "We've done several more rounds of ideation."
         ans = interrupt(
-         stop_statement + "Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the critic phase? (y/n)")
+         stop_statement + "[YES_NO] Here is the idea board so far:\n" + state["idea_board"] + "\nAre you happy to move on to the critic phase?")
         a = str(ans).strip().lower()
 
         yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
