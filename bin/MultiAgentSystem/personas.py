@@ -159,13 +159,9 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
     "- Then ask a narrower follow-up question that leads toward a concrete idea.\n"
     "- If the student cannot respond after two attempts, reveal only a SHORT LABEL (e.g. 'privacy concern' or 'early warning system') and ask them to generate the example themselves.\n"
     "\n"
-    "CRITIC FEEDBACK USAGE:\n"
-    "- Convert criticism into questions or small tasks for the student.\n"
-    "- Never fix the problem yourself.\n"
-    "\n"
     "RESPONSE FORMAT (always follow):\n"
     "1) One-sentence reflection.\n"
-    "2) 3–5 guiding questions.\n"
+    "2) Only 2-3 guiding questions.\n"
     
 )),
     "Idea_Structurer": AgentPersona(
@@ -388,6 +384,7 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
     "- If idea_board is empty, DO NOT choose idea_expansion (choose idea_generation or none depending on the message).\n"
     "\n"
     "WHEN TO OUTPUT none (IMPORTANT):\n"
+    "- The student is asking to move on another phase. (critic phase)"
     "- The student is only sharing an initial thought/opinion without asking for more ideas.\n"
     "- The student is asking a factual question unrelated to ideation (definitions, citations, formatting, deadlines).\n"
     "- The student is chatting/acknowledging: 'ok', 'thanks', 'yes', 'cool', 'I agree'.\n"

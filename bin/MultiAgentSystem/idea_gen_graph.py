@@ -100,6 +100,28 @@ class IdeationSubgraph:
         print(f"--- Starting iteration {iteration} ---")
         return {"ideation_iteration": iteration}
     
+    def check_move_on(self, state:State):
+        if state["route"] == "none":
+            latest_message = state["turn_user_messages"][-1].lower().strip()
+
+            move_to_critic_phrases = [
+                "let's move on to critic phase",
+                "lets move on to critic phase",
+                "i want to go to critic phase",
+                "i want to skip to critic phase",
+                "move to critic phase",
+                "go to critic phase",
+                "skip to critic phase",
+            ]
+            if any(phrase in latest_message for phrase in move_to_critic_phrases):
+                ans = interrupt(
+                   "Are you sure you want to move on to the critic phase? (y/n)")
+                a = str(ans).strip().lower() 
+                yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
+
+                if yes:
+                   return {"facilitation_done": True}
+    
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of ideation. "
         if state["ideation_iteration"] > 5 :
@@ -133,6 +155,8 @@ class IdeationSubgraph:
     # ---- graph build ----
     def _build(self) -> StateGraph:
         g = StateGraph(State)
+
+        #nodes
         g.add_node("user_reply_1", self._user_turn_node_1)
         g.add_node("user_reply_2", self._user_turn_node_2)
         g.add_node("iterater", self._iterater)
@@ -143,7 +167,9 @@ class IdeationSubgraph:
         g.add_node("structure", self._structure_node)
         g.add_node("cleanup", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
+        g.add_node("move_on", self.check_move_on)
         
+        #edges
         g.add_edge(START, "facilitator")
         g.add_edge("facilitator", "user_reply_1")
         g.add_edge("user_reply_1", "iterater")
@@ -164,15 +190,20 @@ class IdeationSubgraph:
                 "none": "structure",
             },
         )
-       # g.add_edge("idea_generation", "cleanup")
-       # g.add_edge("idea_expansion", "cleanup")
         g.add_edge("idea_generation", "user_reply_2")
         g.add_edge("idea_expansion", "user_reply_2")
         g.add_edge("user_reply_2", "structure")
-        g.add_edge("structure", "cleanup")
+        g.add_edge("structure", "move_on")
+        g.add_conditional_edges(
+            "move_on",
+            lambda s: s["facilitation_done"],
+            {
+                True: END,
+                False: "cleanup",   
+            })
         g.add_conditional_edges(
             "cleanup",
-            lambda s: "stop?" if (s["ideation_iteration"] >= 4 and s["ideation_iteration"] % 4 == 0) else "continue",
+            lambda s: "stop?" if (s["ideation_iteration"] >= 6 and s["ideation_iteration"] % 6 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",
