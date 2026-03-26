@@ -100,28 +100,29 @@ class IdeationSubgraph:
         print(f"--- Starting iteration {iteration} ---")
         return {"ideation_iteration": iteration}
     
-    def check_move_on(self, state:State):
-        if state["route"] == "none":
-            latest_message = state["turn_user_messages"][-1].lower().strip()
-
-            move_to_critic_phrases = [
-                "let's move on to critic phase",
-                "lets move on to critic phase",
-                "i want to go to critic phase",
-                "i want to skip to critic phase",
-                "move to critic phase",
-                "go to critic phase",
-                "skip to critic phase",
-            ]
-            if any(phrase in latest_message for phrase in move_to_critic_phrases):
-                ans = interrupt(
-                   "Are you sure you want to move on to the critic phase? (y/n)")
-                a = str(ans).strip().lower() 
-                yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
-
-                if yes:
-                   return {"facilitation_done": True}
+    def check_move_on(self, state: State):
+        messages = state.get("turn_user_messages", [])
+        if not messages:
+            return {"facilitation_done": False}
     
+        latest_message = str(messages[-1]).lower().strip()
+    
+        move_words = {"move on", "go", "skip", "proceed", "continue", "move"}
+        target_words = {"critic phase", "criticising", "criticise"}
+    
+        wants_move = any(word in latest_message for word in move_words)
+        wants_target = any(word in latest_message for word in target_words)
+    
+        if not (wants_move and wants_target):
+            return {"facilitation_done": False}
+    
+        ans = interrupt("Are you sure you want to move on to the structuring phase? (y/n)")
+        confirmed = str(ans).strip().lower() in {
+            "y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "continue"
+        }
+    
+        return {"facilitation_done": confirmed}
+
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of ideation. "
         if state["ideation_iteration"] > 5 :
@@ -203,7 +204,7 @@ class IdeationSubgraph:
             })
         g.add_conditional_edges(
             "cleanup",
-            lambda s: "stop?" if (s["ideation_iteration"] >= 6 and s["ideation_iteration"] % 6 == 0) else "continue",
+            lambda s: "stop?" if (s["ideation_iteration"] >= 2 and s["ideation_iteration"] % 2 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",

@@ -93,6 +93,30 @@ class CriticSubgraph:
         
         return {"criticising_done": False}
     
+    def check_move_on(self, state: State):
+        messages = state.get("turn_user_messages", [])
+        if not messages:
+            return {"criticising_done": False}
+    
+        latest_message = str(messages[-1]).lower().strip()
+    
+        move_words = {"move on", "go", "skip", "proceed", "continue"}
+        target_words = {"structuring phase", "structuring", "structure"}
+    
+        wants_move = any(word in latest_message for word in move_words)
+        wants_target = any(word in latest_message for word in target_words)
+    
+        if not (wants_move and wants_target):
+            return {"criticising_done": False}
+    
+        ans = interrupt("Are you sure you want to move on to the structuring phase? (y/n)")
+        confirmed = str(ans).strip().lower() in {
+            "y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "continue"
+        }
+    
+        return {"criticising_done": confirmed}
+
+    
     def save_mermaid_png(self, output_file_path: str = "ideation_subgraph.png") -> str:
         """
         Render the graph as a PNG using Mermaid drawing and save it.
@@ -104,7 +128,6 @@ class CriticSubgraph:
         # draw_mermaid_png returns bytes; passing output_file_path also saves the file.
         img_bytes = self.graph.get_graph().draw_mermaid_png(output_file_path=str(path))
         if img_bytes and not path.exists():
-            # Fallback: write bytes ourselves if your version doesn't auto-save
             path.write_bytes(img_bytes)
 
         return str(path)
@@ -122,11 +145,27 @@ class CriticSubgraph:
         g.add_node("structure", self._structure_node)
         g.add_node("cleanup", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
+        g.add_node("move_on", self.check_move_on)
 
         # ---- edges ----
         g.add_edge(START, "facilitator")
+        g.add_conditional_edges(
+          START,
+          lambda s: "first_turn" if s["critic_iteration"] == 1 else "other_turn",
+          {
+              "first_turn": "cleanup",
+              "other_turn": "facilitator",
+          }
+        )
         g.add_edge("facilitator", "user_reply_1")
-        g.add_edge("user_reply_1", "critic")
+        g.add_edge("user_reply_1", "move_on")
+        g.add_conditional_edges(
+            "move_on",
+            lambda s: s["criticising_done"],
+            {
+                True: END,
+                False: "critic",   
+            })
         g.add_edge("critic", "user_reply_2")
         g.add_edge("user_reply_2", "structure")
         g.add_edge("structure", "cleanup")
