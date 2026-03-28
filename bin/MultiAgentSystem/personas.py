@@ -429,6 +429,7 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
     "EXAMPLES:\n"
     "Student: 'I think AI helps personalize learning.' -> none\n"
     "Student: 'Can you explain what personalization means?' -> none\n"
+    "Student: 'Yea I would like the subject specialist pick one of these ideas to expand on' -> idea_expansion"
     "Student: 'Give me 5 new angles for this topic.' -> idea_generation\n"
     "Student: 'Expand the point about personalization with an example.' -> idea_expansion\n"
     "Student: 'Lets expand on this idea of personalization with an example.' -> idea_expansion\n"

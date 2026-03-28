@@ -116,7 +116,7 @@ class IdeationSubgraph:
         if not (wants_move and wants_target):
             return {"facilitation_done": False}
     
-        ans = interrupt("[YES_NO] Are you sure you want to move on to the structuring phase?")
+        ans = interrupt("[YES_NO] Are you sure you want to move on to the critic phase?")
         confirmed = str(ans).strip().lower() in {
             "y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "continue"
         }
@@ -165,8 +165,10 @@ class IdeationSubgraph:
         g.add_node("router", self._routing_node)
         g.add_node("idea_generation", self._idea_generation_node)
         g.add_node("idea_expansion", self._idea_expansion_node)
-        g.add_node("structure", self._structure_node)
-        g.add_node("cleanup", self._cleanup_messages)
+        g.add_node("structure_1", self._structure_node)
+        g.add_node("structure_2", self._structure_node)
+        g.add_node("cleanup_1", self._cleanup_messages)
+        g.add_node("cleanup_2", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
         g.add_node("move_on", self.check_move_on)
         
@@ -174,8 +176,10 @@ class IdeationSubgraph:
         g.add_edge(START, "facilitator")
         g.add_edge("facilitator", "user_reply_1")
         g.add_edge("user_reply_1", "iterater")
+        g.add_edge("iterater", "structure_1")
+        g.add_edge("structure_1", "cleanup_1")
         g.add_conditional_edges(
-            "iterater",
+            "cleanup_1",
             lambda s: "intro_node" if s["ideation_iteration"] in [1, 2] else "normal_node",
             {
                 "intro_node": "facilitator",  # Loop back to facilitator for the first turn to get the initial student ideas before further ideation
@@ -188,22 +192,22 @@ class IdeationSubgraph:
             {
                 "idea_generation": "idea_generation",
                 "idea_expansion": "idea_expansion",
-                "none": "structure",
+                "none": "structure_2",
             },
         )
         g.add_edge("idea_generation", "user_reply_2")
         g.add_edge("idea_expansion", "user_reply_2")
-        g.add_edge("user_reply_2", "structure")
-        g.add_edge("structure", "move_on")
+        g.add_edge("user_reply_2", "structure_2")
+        g.add_edge("structure_2", "move_on")
         g.add_conditional_edges(
             "move_on",
             lambda s: s["facilitation_done"],
             {
                 True: END,
-                False: "cleanup",   
+                False: "cleanup_2",   
             })
         g.add_conditional_edges(
-            "cleanup",
+            "cleanup_2",
             lambda s: "stop?" if (s["ideation_iteration"] >= 2 and s["ideation_iteration"] % 2 == 0) else "continue",
             {
                 "stop?": "stop_condition",
