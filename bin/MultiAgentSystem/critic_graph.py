@@ -1,5 +1,6 @@
 from __future__ import annotations
 from langgraph.types import interrupt
+from langchain_core.runnables.graph import MermaidDrawMethod
 from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
@@ -143,20 +144,21 @@ class CriticSubgraph:
         g.add_node("user_reply_2", self._user_turn_node_2)
         g.add_node("critic", self._critic_node)
         g.add_node("structure", self._structure_node)
-        g.add_node("cleanup", self._cleanup_messages)
+        g.add_node("cleanup_1", self._cleanup_messages)
+        g.add_node("cleanup_2", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
         g.add_node("move_on", self.check_move_on)
 
         # ---- edges ----
-        g.add_edge(START, "facilitator")
         g.add_conditional_edges(
           START,
           lambda s: "first_turn" if s["critic_iteration"] == 1 else "other_turn",
           {
-              "first_turn": "cleanup",
+              "first_turn": "cleanup_1",
               "other_turn": "facilitator",
           }
         )
+        g.add_edge("cleanup_1", "facilitator")
         g.add_edge("facilitator", "user_reply_1")
         g.add_edge("user_reply_1", "move_on")
         g.add_conditional_edges(
@@ -168,14 +170,14 @@ class CriticSubgraph:
             })
         g.add_edge("critic", "user_reply_2")
         g.add_edge("user_reply_2", "structure")
-        g.add_edge("structure", "cleanup")
-        g.add_edge("cleanup", "iterator")
+        g.add_edge("structure", "cleanup_2")
+        g.add_edge("cleanup_2", "iterator")
         g.add_conditional_edges(
             "iterator",
             lambda s: "stop?" if (s["critic_iteration"] >= 4 and s["critic_iteration"] % 4 == 0) else "continue",
             {
                 "stop?": "stop_condition",
-                "continue": "facilitator",
+                "continue": "critic",
             },
         )
         g.add_conditional_edges(
@@ -183,7 +185,7 @@ class CriticSubgraph:
             lambda s: s["criticising_done"],
             {
                 True: END,
-                False: "facilitator",   
+                False: "critic",   
             })
         return g
     
