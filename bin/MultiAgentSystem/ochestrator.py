@@ -16,7 +16,7 @@ class PlanningModule:
     """
     def __init__(self,idea_generator_agent,facilitator_agent_ideation,idea_structurer_agent,subject_specialist_agent,
                  critic_agent, router_agent, facilitator_agent_critic, structuring_coach_agent, argument_flow_agent,
-                 facilitator_agent_structuring):
+                 facilitator_agent_structuring, structuring_router_agent, structuring_idea_structurer_agent):
 
         # Agents
         self.idea_generator_agent = idea_generator_agent
@@ -27,7 +27,9 @@ class PlanningModule:
         self.router_agent = router_agent
         self.facilitator_agent_critic = facilitator_agent_critic
         self.structuring_coach_agent = structuring_coach_agent
+        self.structuring_router_agent = structuring_router_agent
         self.argument_flow_agent = argument_flow_agent
+        self.structuring_idea_structurer_agent = structuring_idea_structurer_agent
         self.facilitator_agent_structuring = facilitator_agent_structuring
 
         # Ideation Subgraph
@@ -50,7 +52,9 @@ class PlanningModule:
         self.structuring = StructuringSubgraph(
             self.facilitator_agent_structuring,
             self.structuring_coach_agent,
-            self.argument_flow_agent
+            self.argument_flow_agent, 
+            self.structuring_router_agent,
+            self.structuring_idea_structurer_agent,
         )
 
         # Planning module graph (compiled)

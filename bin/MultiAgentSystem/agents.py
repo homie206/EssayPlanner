@@ -59,6 +59,14 @@ def create_all_agents(state: State):
     argument_flow_prompt = build_prompt_for_agent("ArgumentFlow", state["subject"])
     argument_flow_agent = create_agent(argument_flow_prompt)
 
+    # Structuring Router Agent
+    structuring_router_prompt = build_prompt_for_agent("StructuringRouter", state["subject"])
+    structuring_router_agent = create_agent(structuring_router_prompt)
+
+    # Structuring Idea Structurer Agent
+    structuring_idea_structurer_prompt = build_prompt_for_agent("StructuringIdeaStructurer", state["subject"])
+    structuring_idea_structurer_agent = create_agent(structuring_idea_structurer_prompt)
+
     return (
         facilitator_agent_ideation,
         idea_generator_agent,
@@ -70,4 +78,6 @@ def create_all_agents(state: State):
         structuring_coach_agent,
         argument_flow_agent,
         facilitator_agent_structuring,
+        structuring_router_agent,
+        structuring_idea_structurer_agent,
     )

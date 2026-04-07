@@ -7,10 +7,12 @@ from .state_schema import State
 
 class StructuringSubgraph:
 
-    def __init__(self, facilitator_agent, structuring_coach_agent, argument_flow_agent):
+    def __init__(self, facilitator_agent, structuring_coach_agent, argument_flow_agent, router_agent, structuring_idea_structurer_agent):
         self.facilitator_agent = facilitator_agent
         self.structuring_coach_agent = structuring_coach_agent
         self.argument_flow_agent = argument_flow_agent
+        self.router_agent = router_agent
+        self.idea_structurer_agent = structuring_idea_structurer_agent
 
         self.graph = self._build().compile(checkpointer=True)
 
@@ -75,7 +77,39 @@ class StructuringSubgraph:
         )
 
         return {"argument_flow_reply": reply}
+    
+    def _router_node(self, state: State):
 
+        reply = chat(
+            self.router_agent,
+            "Student message:\n"
+            + state["latest_user_message"]
+            + "\n\nIdea board:\n"
+            + state.get("idea_board", ""),
+            thread_id=state["thread_id"],
+        )
+
+        route = str(reply).strip().lower()
+
+        if route not in ("structuring", "flow"):
+            route = "none"
+
+        print(f"Router chose route: {route}")
+
+        return {"route": route}
+
+    def _idea_structurer_node(self, state: State):
+
+        reply = chat(
+            self.idea_structurer_agent,
+            "Existing ideas: "
+            + state["idea_board"]
+            + "\nStudent messages:\n"
+            + "\n".join(state.get("turn_user_messages", [])),
+            thread_id=state["thread_id"],
+        )
+
+        return {"idea_board": reply}
 
     def _iteration_node(self, state: State):
 
@@ -100,6 +134,19 @@ class StructuringSubgraph:
             return {"structuring_done": True}
 
         return {"structuring_done": False}
+    
+    def _after_structurer(self, state: State):
+        iteration = state.get("structuring_iteration", 0)
+
+        # First: stop condition
+        if iteration >= 9:
+            return "stop"
+
+        # Then: intro vs normal
+        if iteration <= 1:
+            return "intro"
+
+        return "normal"
 
 
     # -------------------------
@@ -110,27 +157,48 @@ class StructuringSubgraph:
 
         g = StateGraph(State)
 
+        # Nodes
         g.add_node("facilitator", self._facilitator_node)
-        g.add_node("user", self._user_node)
+        g.add_node("user1", self._user_node)
+        g.add_node("user2", self._user_node)
+        g.add_node("router", self._router_node)
         g.add_node("coach", self._coach_node)
         g.add_node("argument_flow", self._argument_flow_node)
+        g.add_node("idea_structurer", self._idea_structurer_node)
         g.add_node("iterator", self._iteration_node)
         g.add_node("stop_condition", self.stop_condition)
 
         g.add_edge(START, "facilitator")
-        g.add_edge("facilitator", "user")
-        g.add_edge("user", "coach")
-        g.add_edge("coach", "argument_flow")
-        g.add_edge("argument_flow", "iterator")
+
+        g.add_edge("facilitator", "user1")
+        g.add_edge("user1", "iterator")
+        g.add_edge("iterator", "idea_structurer")
 
         g.add_conditional_edges(
-            "iterator",
-            lambda s: "stop?" if s["structuring_iteration"] >= 3 else "continue",
+            "idea_structurer",
+            self._after_structurer,
             {
-                "stop?": "stop_condition",
-                "continue": "facilitator",
+                "intro": "facilitator",
+                "normal": "router",
+                "stop": "stop_condition",
             },
         )
+
+        # Router decides agent
+        g.add_conditional_edges(
+            "router",
+            lambda s: s["route"],
+            {
+                "structuring": "coach",
+                "flow": "argument_flow",
+                "none": "coach", # Default to coach if router doesn't choose a valid route
+            },
+        )
+
+        g.add_edge("coach", "user2")
+        g.add_edge("argument_flow", "user2")
+
+        g.add_edge("user2", "facilitator")
 
         g.add_conditional_edges(
             "stop_condition",
