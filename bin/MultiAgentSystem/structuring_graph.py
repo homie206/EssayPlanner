@@ -116,30 +116,48 @@ class StructuringSubgraph:
         iteration = state["structuring_iteration"] + 1
 
         return {"structuring_iteration": iteration}
+    
+    def _final_output_node(self, state: State):
 
+        idea_board = state.get("idea_board", "")
 
-    def stop_condition(self, state: State):
-
-        ans = interrupt(
-            "Here is the argument flow proposal:\n"
-            + state.get("argument_flow_reply", "")
-            + "\n\nAre you happy with this structure? (y/n)"
+        message = (
+            "Great — your essay plan is now complete.\n\n"
+            "Here is your structured essay plan:\n\n"
+            f"{idea_board}\n\n"
+            "You can now use this to start writing your essay."
         )
 
-        a = str(ans).strip().lower()
+        return {
+            "final_message": message,
+            "final_document": idea_board,
+        }
 
-        yes = a in {"y", "yes", "yeah", "yep", "ok", "sure"}
 
-        if yes:
-            return {"structuring_done": True}
+    def _ask_stop(self, state: State):
+        stop_statement = "We've done a few rounds of structuring now. "
+        if state["structuring_iteration"] > 5:
+            stop_statement = "We've done several more rounds of structuring."
 
-        return {"structuring_done": False}
+        interrupt(
+            stop_statement
+            + "\n\n[YES_NO] Are you happy with your final idea board?"
+        )
+
+        return {}
+    
+    def _decide_stop(self, state: State):
+
+        last = state.get("latest_user_message", "").strip().lower()
+        yes = last in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on"}
+
+        return {"structuring_done": yes}
     
     def _after_structurer(self, state: State):
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 9:
+        if iteration >= 2:
             return "stop"
 
         # Then: intro vs normal
@@ -166,7 +184,9 @@ class StructuringSubgraph:
         g.add_node("argument_flow", self._argument_flow_node)
         g.add_node("idea_structurer", self._idea_structurer_node)
         g.add_node("iterator", self._iteration_node)
-        g.add_node("stop_condition", self.stop_condition)
+        g.add_node("ask_stop", self._ask_stop)
+        g.add_node("decide_stop", self._decide_stop)
+        g.add_node("final_output", self._final_output_node)
 
         g.add_edge(START, "facilitator")
 
@@ -180,9 +200,12 @@ class StructuringSubgraph:
             {
                 "intro": "facilitator",
                 "normal": "router",
-                "stop": "stop_condition",
+                "stop": "ask_stop",
             },
         )
+
+        g.add_edge("ask_stop", "user1")
+        g.add_edge("user1", "decide_stop")
 
         # Router decides agent
         g.add_conditional_edges(
@@ -201,12 +224,14 @@ class StructuringSubgraph:
         g.add_edge("user2", "facilitator")
 
         g.add_conditional_edges(
-            "stop_condition",
+            "decide_stop",
             lambda s: s["structuring_done"],
             {
-                True: END,
+                True: "final_output",
                 False: "facilitator",
             },
         )
+
+        g.add_edge("final_output", END)
 
         return g

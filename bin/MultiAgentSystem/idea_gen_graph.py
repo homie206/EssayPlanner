@@ -125,7 +125,7 @@ class IdeationSubgraph:
 
     def stop_condition(self, state: State) -> bool:
         stop_statement = "We've done a few rounds of ideation. "
-        if state["ideation_iteration"] > 5 :
+        if state["ideation_iteration"] > 2 :
             stop_statement = "We've done several more rounds of ideation."
         ans = interrupt(
          stop_statement + "\n\n[YES_NO] Here is the idea board so far:\n\n" + state["idea_board"] + "\n\nAre you happy to move on to the critic phase?")

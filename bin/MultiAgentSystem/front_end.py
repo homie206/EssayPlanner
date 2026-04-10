@@ -185,10 +185,20 @@ def process_events(resp: dict):
         if key == "idea_board" and value is not None:
             st.session_state.idea_board = str(value)
 
+        # Show download button when final_message is received
+        if key == "final_message":
+            st.session_state.show_download = True
+
         # Push displayable agent messages into chat log
-        if should_display(str(key), value):
+        if should_display(str(key), value) or key == "final_message":
+            role = role_from_key(str(node), str(key))
+
+            # Force final message to come from facilitator
+            if key == "final_message":
+                role = "facilitator_structuring" 
+
             st.session_state.chat.append(
-                {"role": role_from_key(str(node), str(key)), "content": str(value)}
+                {"role": role, "content": str(value)}
             )
 
     # Fallback to top-level response fields if no interrupt event was found
@@ -231,6 +241,8 @@ if "show_yes_no" not in st.session_state:
     st.session_state.show_yes_no = False
 if "idea_board" not in st.session_state:
     st.session_state.idea_board = None
+if "show_download" not in st.session_state:
+    st.session_state.show_download = False
 
 
 # ----------------------------
@@ -250,7 +262,7 @@ with st.sidebar:
 
     # Agent legend
     with st.expander("Agent Roles", expanded=True):
-        st.markdown("✨ **You** — your messages")
+        st.markdown("🧑‍🎓 **You** — your messages")
         for cfg in AGENT_CONFIG.values():
             swatch = (
                 f'<span style="display:inline-block;width:12px;height:12px;'
@@ -363,3 +375,20 @@ user_text = st.chat_input("Type your reply here")
 
 if user_text:
     send_user_message(user_text)
+
+
+# ----------------------------
+# Final download section
+# ----------------------------
+
+if st.session_state.show_download and st.session_state.idea_board:
+    st.markdown("---")
+    st.success("Your essay plan is ready!")
+
+    st.markdown("### 📄 Final Essay Plan")
+
+    st.download_button(
+        label="⬇️ Download Essay Plan",
+        data=st.session_state.idea_board,
+        file_name="essay_plan.md",
+    )
