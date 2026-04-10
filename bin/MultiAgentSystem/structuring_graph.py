@@ -157,7 +157,7 @@ class StructuringSubgraph:
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 2:
+        if iteration >= 5:
             return "stop"
 
         # Then: intro vs normal
