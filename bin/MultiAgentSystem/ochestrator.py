@@ -169,6 +169,7 @@ class PlanningModule:
              if isinstance(node_update, dict):
                  for k, v in node_update.items():
                      yield (node_name, k, v)
+                     
     def show_graph(self):
      # Mermaid diagram
      mermaid = self.graph.get_graph().draw_mermaid()

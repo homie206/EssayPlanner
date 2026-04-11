@@ -1,8 +1,10 @@
+import os
 from __future__ import annotations
 from langgraph.types import interrupt
 from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
+from langgraph.graph.ui import push_ui_message
 
 
 class StructuringSubgraph:
@@ -119,7 +121,17 @@ class StructuringSubgraph:
     
     def _final_output_node(self, state: State):
 
-        idea_board = state.get("idea_board", "")
+        idea_board = state.get("idea_board", "").strip()
+        essay_topic = state.get("essay_topic", "").strip()
+        output_dir = "generated_files"
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f"essay_plan_{essay_topic}.txt"
+        filepath = os.path.join(output_dir, filename)
+
+        with open(filepath, "w", encoding="utf-8") as f:
+           f.write(idea_board)
+
+        download_url = f"/downloads/{filename}"
 
         message = (
             "Great — your essay plan is now complete.\n\n"
@@ -128,10 +140,25 @@ class StructuringSubgraph:
             "You can now use this to start writing your essay."
         )
 
+        push_ui_message(
+        "download_file",
+        {
+            "label": "Download essay plan",
+            "filename": filename,
+            "url": download_url,
+        },
+        message=message,
+    )
+
         return {
-            "final_message": message,
-            "final_document": idea_board,
+            "facilitator_reply": message,
+            "final_file": {
+            "filename": filename,
+            "download_url": download_url,
+            "mime_type": "text/plain",
+            }
         }
+    
 
 
     def _ask_stop(self, state: State):
