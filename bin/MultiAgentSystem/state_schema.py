@@ -1,14 +1,7 @@
 from typing_extensions import Literal, TypedDict
-from typing import List, Annotated, Sequence
-from langgraph.graph.ui import AnyUIMessage, ui_message_reducer
+from typing import List
 
 Route = Literal["idea_generation", "idea_expansion", "none"]
-
-class FinalFile(TypedDict):
-    filename: str
-    download_url: str
-    mime_type: str
-
 class State(TypedDict):
     idea_board: str
     structures: List[str]
@@ -30,5 +23,6 @@ class State(TypedDict):
     route: Route
     criticising_done : bool
     structuring_done : bool
-    ui: Annotated[Sequence[AnyUIMessage], ui_message_reducer]
-    final_file: FinalFile
+    final_message : str
+    final_file_name: str
+    final_file_mime_type: str
