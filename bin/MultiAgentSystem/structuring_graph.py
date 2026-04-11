@@ -3,6 +3,8 @@ from langgraph.types import interrupt
 from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
+from pathlib import Path
+
 
 
 class StructuringSubgraph:
@@ -136,29 +138,32 @@ class StructuringSubgraph:
 
 
     def _ask_stop(self, state: State):
+        idea_board = state.get("idea_board", "")
         stop_statement = "We've done a few rounds of structuring now. "
         if state["structuring_iteration"] > 5:
             stop_statement = "We've done several more rounds of structuring."
 
-        interrupt(
+        ans = interrupt(
             stop_statement
-            + "\n\n[YES_NO] Are you happy with your final idea board?"
+            + 
+            "Here is your idea board:\n\n"
+            f"{idea_board}\n\n"
+            "\n\n[YES_NO] Are you happy with your final idea board?"
         )
 
-        return {}
-    
-    def _decide_stop(self, state: State):
+        a = str(ans).strip().lower()
 
-        last = state.get("latest_user_message", "").strip().lower()
-        yes = last in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on"}
+        yes = a in {"y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "move on", "continue"}
 
-        return {"structuring_done": yes}
+        if yes:
+            return {"structuring_done": True}
+        
     
     def _after_structurer(self, state: State):
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 5:
+        if iteration >= 2:
             return "stop"
 
         # Then: intro vs normal
@@ -166,7 +171,22 @@ class StructuringSubgraph:
             return "intro"
 
         return "normal"
+    
+    def save_mermaid_png(self, output_file_path: str = "ideation_subgraph.png") -> str:
+        """
+        Render the graph as a PNG using Mermaid drawing and save it.
+        Returns the saved path.
+        """
+        path = Path(output_file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
+        # draw_mermaid_png returns bytes; passing output_file_path also saves the file.
+        img_bytes = self.graph.get_graph().draw_mermaid_png(output_file_path=str(path))
+        if img_bytes and not path.exists():
+            # Fallback: write bytes ourselves if your version doesn't auto-save
+            path.write_bytes(img_bytes)
+        
+        return str(path)
 
     # -------------------------
     # Graph Builder
@@ -186,7 +206,6 @@ class StructuringSubgraph:
         g.add_node("idea_structurer", self._idea_structurer_node)
         g.add_node("iterator", self._iteration_node)
         g.add_node("ask_stop", self._ask_stop)
-        g.add_node("decide_stop", self._decide_stop)
         g.add_node("final_output", self._final_output_node)
 
         g.add_edge(START, "facilitator")
@@ -205,8 +224,6 @@ class StructuringSubgraph:
             },
         )
 
-        g.add_edge("ask_stop", "user1")
-        g.add_edge("user1", "decide_stop")
 
         # Router decides agent
         g.add_conditional_edges(
@@ -218,14 +235,14 @@ class StructuringSubgraph:
                 "none": "coach", # Default to coach if router doesn't choose a valid route
             },
         )
-
+      
         g.add_edge("coach", "user2")
         g.add_edge("argument_flow", "user2")
 
         g.add_edge("user2", "facilitator")
 
         g.add_conditional_edges(
-            "decide_stop",
+            "ask_stop",
             lambda s: s["structuring_done"],
             {
                 True: "final_output",
