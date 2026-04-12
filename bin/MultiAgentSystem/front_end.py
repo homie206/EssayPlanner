@@ -188,9 +188,6 @@ def process_events(resp: dict):
         if key == "final_file_name" and value:
             st.session_state.final_file_name = str(value)
 
-        if key == "final_file_mime_type" and value:
-            st.session_state.final_file_mime_type = str(value)
-
         # Show download button when final_message is received
         if key == "final_message":
             st.session_state.show_download = True
@@ -247,12 +244,10 @@ if "show_yes_no" not in st.session_state:
     st.session_state.show_yes_no = False
 if "idea_board" not in st.session_state:
     st.session_state.idea_board = None
-if "final_file_name" not in st.session_state:
-    st.session_state.final_file_name = "essay_plan.txt"
-if "final_file_mime_type" not in st.session_state:
-    st.session_state.final_file_mime_type = "text"
 if "show_download" not in st.session_state:
     st.session_state.show_download = False
+if "final_file_name" not in st.session_state:
+    st.session_state.final_file_name = "essay_plan.txt"
 
 
 # ----------------------------
@@ -297,17 +292,17 @@ with st.sidebar:
     st.markdown("---")
 
     if st.button("Reset session"):
-       st.session_state.thread_id = None
-       st.session_state.chat = []
-       st.session_state.last_values = {}
-       st.session_state.needs_user_input = False
-       st.session_state.interrupt_prompt = None
-       st.session_state.show_yes_no = False
-       st.session_state.idea_board = None
-       st.session_state.show_download = False
-       st.session_state.final_file_name = "essay_plan.txt"
-       st.session_state.final_file_mime_type = "text"
-       st.rerun()
+        st.session_state.thread_id = None
+        st.session_state.chat = []
+        st.session_state.last_values = {}
+        st.session_state.needs_user_input = False
+        st.session_state.interrupt_prompt = None
+        st.session_state.show_yes_no = False
+        st.session_state.idea_board = None
+        st.session_state.show_download = False
+        st.session_state.final_file_name = "essay_plan.txt"
+        st.rerun()
+
 
 # Render chat history
 for msg in st.session_state.chat:
@@ -402,6 +397,5 @@ if st.session_state.show_download and st.session_state.idea_board:
     st.download_button(
         label="⬇️ Download Essay Plan",
         data=st.session_state.idea_board,
-        file_name=st.session_state.final_file_name,
-        mime=st.session_state.final_file_mime_type,
+        file_name=st.session_state.final_file_name
     )

@@ -56,9 +56,6 @@ def make_initial_state(thread_id: str, subject: str, essay_topic: str) -> State:
         "route": "none",
         "done": False,
         "structuring_done": False,
-        "final_message": str,
-        "final_file_name": str,
-        "final_file_mime_type": str
     }   
 
 

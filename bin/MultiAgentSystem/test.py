@@ -2,15 +2,12 @@
 from .prompts import build_prompt_for_agent
 from .tools import Tools
 from .critic_graph import CriticSubgraph
-from .structuring_graph import StructuringSubgraph
 from .agents import create_all_agents
 from .state_schema import State
 import uuid 
 import sys, time
 from langgraph.types import Command
 from .llm_connector import chat
-from pathlib import Path
-
 
 
 
@@ -75,20 +72,62 @@ Things I am not fully sure about yet:
     "done": False
 }
 #create agents and the MAS graph
-facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic, structuring_coach, argument_flow, facilitator_structuring, structuring_router, structuring_idea_structurer  = create_all_agents(initial_state)
-structuring_graph = StructuringSubgraph(
-        facilitator_agent=facilitator_structuring,
-        structuring_coach_agent=structuring_coach,
-        argument_flow_agent=argument_flow,
-        router_agent=structuring_router,
-        structuring_idea_structurer_agent=structuring_idea_structurer,
-    )
-structuring_graph.graph.get_graph().draw_mermaid()
+facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic, structuring_coach, argument_flow, facilitator_structuring = create_all_agents(initial_state)
+critic = CriticSubgraph(facilitator_agent_critic, critic, idea_structurer)
+critic_graph = critic.graph
 
-out_path = Path("graphs/structuring_subgraph.png")
-out_path.parent.mkdir(parents=True, exist_ok=True)
-out_path.write_bytes(
-        structuring_graph.graph.get_graph(xray=True).draw_mermaid_png()
-    )
+# -----------------------------
+    # Streaming runner with interrupt handling
+    # -----------------------------
+def stream_updates(
+    graph,
+    initial_state: State,
+    thread_id: str,
+):
+    """
+    Yields (node_name, state_key, value) updates.
+    Handles interrupts by prompting on CLI and resuming with Command(resume=...).
+    """
+    fields = {
+"facilitator": "facilitator_reply",
+"router": "route",
+"idea_generation": "idea_generator_reply",
+"idea_expansion": "subject_specialist_reply",
+"critic": "critic_reply"
+}
+    initial_input =initial_state
+    while True:
+        for _, chunk in graph.stream(
+            initial_input,
+            config={"configurable": {"thread_id": thread_id}},
+            subgraphs=True,
+            stream_mode="updates",
+        ):
+            # Handle turn boundary
+            if "__interrupt__" in chunk:
+                prompt = chunk["__interrupt__"][0].value
+                print (str(prompt))
+                user_response = input().strip()
+                # Resume from interrupt
+                initial_input = Command(resume=user_response)
+                break
+             
+            ## Emit useful node updates
+            for node, state_key in fields.items():
+                if node in chunk:
+                    node_update = chunk[node]
+                    if isinstance(node_update, dict) and state_key in node_update:
+                        yield (node, state_key, node_update[state_key])
 
-print(f"Saved graph image to: {out_path.resolve()}")
+while True:
+    for node, key, value in stream_updates(critic_graph, initial_state, thread_id):
+        print(f"\n[{node}] {key}:\n{value}\n")
+
+    #print("User message:", next_state["user_message"])
+    #print_turn_summary(next_state)
+    #initial_state = next_state
+    
+    #user_message = input("Your turn (type 'exit' to quit): ")
+    #if user_message.lower() == 'exit':
+    #    break
+    #initial_state["user_message"] = user_message

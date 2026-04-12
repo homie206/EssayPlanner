@@ -125,7 +125,7 @@ class StructuringSubgraph:
         essay_topic = state.get("essay_topic", "").strip()
         message = (
             "Great — your essay plan is now complete.\n\n"
-            "Here is your structured essay plan is ready to be downloaded:\n\n"
+            "Your structured essay plan is ready to be downloaded:\n\n"
             "You can now use this to start writing your essay."
         )
 
