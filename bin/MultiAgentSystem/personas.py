@@ -206,6 +206,7 @@ AGENT_PERSONAS: Dict[str, AgentPersona] = {
         "- If an idea that has been discussed already appears again, add the new detail as a subpoint under that idea instead of creating a new heading.\n"
         "\n"
         "Important constraints:\n"
+        "- DO NOT DELETE EXISTING PARTS OF THE IDEA BOARD AT ANY POINT. "
         "- ONLY ADD ACTUAL CONTENT WRITTEN BY THE STUDENT THAT CONTRIBUTES TO THE ESSAY."
         "- DO NOT ADD ANY EXPRESSIONS FROM THE STUDENT OR THE AGENTS"
         "- Do NOT ADD ANY IDEAS BY YOURSELF. YOU ONLY UPDATE THE IDEA BOARD FROM THE STUDENT'S MESSAGE.\n"
