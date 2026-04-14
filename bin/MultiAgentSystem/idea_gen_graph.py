@@ -176,16 +176,16 @@ class IdeationSubgraph:
         g.add_edge(START, "facilitator")
         g.add_edge("facilitator", "user_reply_1")
         g.add_edge("user_reply_1", "iterater")
-        g.add_edge("iterater", "structure_1")
-        g.add_edge("structure_1", "cleanup_1")
         g.add_conditional_edges(
-            "cleanup_1",
+            "iterater",
             lambda s: "intro_node" if s["ideation_iteration"] in [1, 2] else "normal_node",
             {
-                "intro_node": "facilitator",  # Loop back to facilitator for the first turn to get the initial student ideas before further ideation
-                "normal_node": "router", # After the first turn, route to either idea generation or expansion based on the router's decision
+                "intro_node": "structure_1",  
+                "normal_node": "router"
             },
         )
+        g.add_edge("structure_1", "cleanup_1")
+        g.add_edge("cleanup_1", "facilitator")
         g.add_conditional_edges(
             "router",
             lambda s: s["route"],

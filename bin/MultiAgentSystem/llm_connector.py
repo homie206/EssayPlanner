@@ -15,7 +15,7 @@ def create_agent(system_prompt: str, model_name = "gpt-4.1-mini", tools: list = 
     llm = ChatOpenAI(
      model=model_name,
      temperature=0.1,
-     max_tokens=10000,
+     max_tokens=32768,
      timeout=300,
     # ... (other params)
    )

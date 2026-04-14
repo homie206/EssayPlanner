@@ -53,7 +53,7 @@ def create_all_agents(state: State):
 
     # Structuring Coach
     structuring_prompt = build_prompt_for_agent("StructuringCoach", state["subject"])
-    structuring_coach_agent = create_agent(structuring_prompt)
+    structuring_coach_agent = create_agent(structuring_prompt, model_name="gpt-5")
 
     # Argument Flow Agent
     argument_flow_prompt = build_prompt_for_agent("ArgumentFlow", state["subject"])
