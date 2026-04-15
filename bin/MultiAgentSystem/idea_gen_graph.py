@@ -208,7 +208,7 @@ class IdeationSubgraph:
             })
         g.add_conditional_edges(
             "cleanup_2",
-            lambda s: "stop?" if (s["ideation_iteration"] >= 2 and s["ideation_iteration"] % 2 == 0) else "continue",
+            lambda s: "stop?" if (s["ideation_iteration"] >= 4 and s["ideation_iteration"] % 4 == 0) else "continue",
             {
                 "stop?": "stop_condition",
                 "continue": "facilitator",

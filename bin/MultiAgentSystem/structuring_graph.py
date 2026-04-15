@@ -163,7 +163,7 @@ class StructuringSubgraph:
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 2:
+        if iteration >= 5:
             return "stop"
 
         # Then: intro vs normal
@@ -212,10 +212,9 @@ class StructuringSubgraph:
 
         g.add_edge("facilitator", "user1")
         g.add_edge("user1", "iterator")
-        g.add_edge("iterator", "idea_structurer")
 
         g.add_conditional_edges(
-            "idea_structurer",
+            "iterator",
             self._after_structurer,
             {
                 "intro": "facilitator",
@@ -238,8 +237,8 @@ class StructuringSubgraph:
       
         g.add_edge("coach", "user2")
         g.add_edge("argument_flow", "user2")
-
-        g.add_edge("user2", "facilitator")
+        g.add_edge("user2", "idea_structurer")
+        g.add_edge("idea_structurer", "facilitator")
 
         g.add_conditional_edges(
             "ask_stop",
