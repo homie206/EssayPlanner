@@ -7,7 +7,7 @@ services:
       target: runtime
     command: uvicorn bin.MultiAgentSystem.app:app --host 0.0.0.0 --port 8000 --workers 2
     ports:
-      - "8000:8000"
+      - "443:8000"
     volumes:
       - ./bin:/app/bin
       - ./pyproject.toml:/app/pyproject.toml:ro
@@ -30,7 +30,7 @@ services:
       target: runtime
     command: streamlit run bin/MultiAgentSystem/front_end.py --server.port 8501 --server.address 0.0.0.0
     ports:
-      - "8501:8501"
+      - "80:8501"
     volumes:
       - ./bin:/app/bin
     env_file:
