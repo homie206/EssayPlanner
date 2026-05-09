@@ -158,12 +158,43 @@ class StructuringSubgraph:
         if yes:
             return {"structuring_done": True}
         
+    def check_move_on(self, state: State):
+        messages = state.get("turn_user_messages", [])
+        stop_statement = "The brainstorming session will finish now."
+        idea_board = state.get("idea_board", "")
+        if not messages:
+            return {"structuring_done": False}
+    
+        latest_message = str(messages[-1]).lower().strip()
+    
+        move_words = {"skip", "finish", "ready to write", "stop", "I think I am ready to start", "I had enough"}
+        target_words = {"structuring phase", "structuring", "structure", "brainstorming", " the essay", "writing"}
+    
+        wants_move = any(word in latest_message for word in move_words)
+        wants_target = any(word in latest_message for word in target_words)
+    
+        if not (wants_move and wants_target):
+            return {"structuring_done": False}
+        
+        ans = interrupt(
+            stop_statement
+            + 
+            "Here is your idea board:\n\n"
+            f"{idea_board}\n\n"
+            "\n\n[YES_NO] Are you happy with your final idea board?"
+        )
+
+        confirmed = str(ans).strip().lower() in {
+            "y", "yes", "yeah", "yep", "sure", "ok", "okay", "go", "continue"
+        }
+    
+        return {"structuring_done": confirmed}
     
     def _after_structurer(self, state: State):
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 5:
+        if iteration >= 4:
             return "stop"
 
         # Then: intro vs normal
@@ -207,11 +238,21 @@ class StructuringSubgraph:
         g.add_node("iterator", self._iteration_node)
         g.add_node("ask_stop", self._ask_stop)
         g.add_node("final_output", self._final_output_node)
+        g.add_node("move_on", self.check_move_on)
 
         g.add_edge(START, "facilitator")
 
         g.add_edge("facilitator", "user1")
-        g.add_edge("user1", "iterator")
+        g.add_edge("user1", "move_on")
+        
+        #check for manual exit
+        g.add_conditional_edges(
+            "move_on",
+            lambda s: s["criticising_done"],
+            {
+                True: "final_output",
+                False: "iterator",   
+            })
 
         g.add_conditional_edges(
             "iterator",
@@ -223,7 +264,7 @@ class StructuringSubgraph:
             },
         )
 
-
+        
         # Router decides agent
         g.add_conditional_edges(
             "router",
@@ -237,6 +278,7 @@ class StructuringSubgraph:
       
         g.add_edge("coach", "user2")
         g.add_edge("argument_flow", "user2")
+        #g.add_edge("user2", "")
         g.add_edge("user2", "idea_structurer")
         g.add_edge("idea_structurer", "facilitator")
 

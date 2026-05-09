@@ -175,7 +175,17 @@ class IdeationSubgraph:
         #edges
         g.add_edge(START, "facilitator")
         g.add_edge("facilitator", "user_reply_1")
-        g.add_edge("user_reply_1", "iterater")
+        g.add_edge("user_reply_1", "move_on")
+
+        #check for manual stop condition
+        g.add_conditional_edges(
+            "move_on",
+            lambda s: s["facilitation_done"],
+            {
+                True: END,
+                False: "iterater",   
+            })
+        
         g.add_conditional_edges(
             "iterater",
             lambda s: "intro_node" if s["ideation_iteration"] in [1, 2] else "normal_node",
@@ -198,14 +208,7 @@ class IdeationSubgraph:
         g.add_edge("idea_generation", "user_reply_2")
         g.add_edge("idea_expansion", "user_reply_2")
         g.add_edge("user_reply_2", "structure_2")
-        g.add_edge("structure_2", "move_on")
-        g.add_conditional_edges(
-            "move_on",
-            lambda s: s["facilitation_done"],
-            {
-                True: END,
-                False: "cleanup_2",   
-            })
+        g.add_edge("structure_2", "cleanup_2")
         g.add_conditional_edges(
             "cleanup_2",
             lambda s: "stop?" if (s["ideation_iteration"] >= 4 and s["ideation_iteration"] % 4 == 0) else "continue",
