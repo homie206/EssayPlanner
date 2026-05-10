@@ -1,10 +1,15 @@
 import importlib.util
 import os
+import re
 import time
+from io import BytesIO
 from pathlib import Path
 
 import requests
 import streamlit as st
+from docx import Document
+from fpdf import FPDF
+from fpdf.errors import FPDFException
 
 # Load agent_config.py directly (by file path) to avoid triggering
 # bin/RichUI/__init__.py, which imports heavy orchestrator/agent deps.
@@ -225,6 +230,195 @@ def process_events(resp: dict):
 
 
 # ----------------------------
+# File export helpers
+# ----------------------------
+
+def make_txt_file(content: str) -> str:
+    """Return plain text content for TXT download."""
+    return content
+
+
+def make_docx_file(content: str) -> bytes:
+    """Create a Word document in memory and return it as bytes."""
+    buffer = BytesIO()
+
+    doc = Document()
+    doc.add_heading("Final Essay Plan", level=1)
+
+    for line in content.splitlines():
+        clean_line = line.strip()
+
+        if not clean_line:
+            doc.add_paragraph("")
+        elif clean_line.startswith("# "):
+            doc.add_heading(clean_line.replace("# ", "", 1), level=1)
+        elif clean_line.startswith("## "):
+            doc.add_heading(clean_line.replace("## ", "", 1), level=2)
+        elif clean_line.startswith("### "):
+            doc.add_heading(clean_line.replace("### ", "", 1), level=3)
+        elif clean_line.startswith("- "):
+            doc.add_paragraph(clean_line.replace("- ", "", 1), style="List Bullet")
+        elif clean_line.startswith("* "):
+            doc.add_paragraph(clean_line.replace("* ", "", 1), style="List Bullet")
+        else:
+            doc.add_paragraph(clean_line)
+
+    doc.save(buffer)
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
+def make_pdf_safe_text(text: str) -> str:
+    """
+    Convert text to a PDF-safe form for FPDF core fonts.
+
+    FPDF's built-in fonts do not support every Unicode character,
+    so unsupported characters are replaced instead of crashing the app.
+    """
+    return text.encode("latin-1", "replace").decode("latin-1")
+
+
+def break_long_words(text: str, max_word_length: int = 55) -> str:
+    """
+    Add spaces inside very long unbroken words.
+
+    This prevents FPDF from failing on long URLs, markdown separators,
+    or other text that cannot naturally wrap.
+    """
+    def split_word(match):
+        word = match.group(0)
+        return " ".join(
+            word[i:i + max_word_length]
+            for i in range(0, len(word), max_word_length)
+        )
+
+    return re.sub(r"\S{" + str(max_word_length + 1) + r",}", split_word, text)
+
+
+def pdf_multi_cell_safe(pdf: FPDF, width: float, height: float, text: str):
+    """
+    Render text safely using explicit width and character wrapping where available.
+    """
+    pdf.set_x(pdf.l_margin)
+
+    try:
+        pdf.multi_cell(
+            width,
+            height,
+            text,
+            new_x="LMARGIN",
+            new_y="NEXT",
+            wrapmode="CHAR",
+        )
+    except TypeError:
+        # Older fpdf2 versions may not support wrapmode.
+        pdf.set_x(pdf.l_margin)
+        pdf.multi_cell(
+            width,
+            height,
+            break_long_words(text),
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+    except FPDFException:
+        # Final fallback: shrink font slightly and forcibly split long words.
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_x(pdf.l_margin)
+        pdf.multi_cell(
+            width,
+            height,
+            break_long_words(text, max_word_length=35),
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+
+
+def make_pdf_file(content: str) -> bytes:
+    """Create a simple PDF in memory and return it as bytes."""
+    pdf = FPDF()
+    pdf.set_margins(left=15, top=15, right=15)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    usable_width = pdf.epw
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf_multi_cell_safe(pdf, usable_width, 10, "Final Essay Plan")
+
+    pdf.ln(4)
+
+    for line in content.splitlines():
+        clean_line = make_pdf_safe_text(line.strip())
+
+        if not clean_line:
+            pdf.ln(4)
+            continue
+
+        if clean_line.startswith("# "):
+            text = clean_line.replace("# ", "", 1)
+            pdf.set_font("Helvetica", "B", 15)
+        elif clean_line.startswith("## "):
+            text = clean_line.replace("## ", "", 1)
+            pdf.set_font("Helvetica", "B", 13)
+        elif clean_line.startswith("### "):
+            text = clean_line.replace("### ", "", 1)
+            pdf.set_font("Helvetica", "B", 12)
+        elif clean_line.startswith("- "):
+            text = "- " + clean_line.replace("- ", "", 1)
+            pdf.set_font("Helvetica", "", 11)
+        elif clean_line.startswith("* "):
+            text = "- " + clean_line.replace("* ", "", 1)
+            pdf.set_font("Helvetica", "", 11)
+        else:
+            text = clean_line
+            pdf.set_font("Helvetica", "", 11)
+
+        text = break_long_words(text)
+        pdf_multi_cell_safe(pdf, usable_width, 7, text)
+        pdf.ln(1)
+
+    raw_pdf = pdf.output()
+
+    if isinstance(raw_pdf, str):
+        return raw_pdf.encode("latin-1")
+
+    return bytes(raw_pdf)
+
+
+def build_download_file(content: str, file_type: str, base_name: str):
+    """Return data, filename, and MIME type for selected download format."""
+    safe_base_name = Path(base_name).stem or "essay_plan"
+
+    if file_type == "TXT":
+        return (
+            make_txt_file(content),
+            f"{safe_base_name}.txt",
+            "text/plain",
+        )
+
+    if file_type == "Word document":
+        return (
+            make_docx_file(content),
+            f"{safe_base_name}.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
+    if file_type == "PDF":
+        return (
+            make_pdf_file(content),
+            f"{safe_base_name}.pdf",
+            "application/pdf",
+        )
+
+    return (
+        make_txt_file(content),
+        f"{safe_base_name}.txt",
+        "text/plain",
+    )
+
+
+# ----------------------------
 # Session state init
 # ----------------------------
 
@@ -406,9 +600,22 @@ if st.session_state.show_download and st.session_state.idea_board:
 
     st.markdown("### 📄 Final Essay Plan")
 
-    st.download_button(
-        label="⬇️ Download Essay Plan",
-        data=st.session_state.idea_board,
-        file_name=st.session_state.final_file_name,
+    file_type = st.radio(
+        "Choose download format",
+        ["TXT", "Word document", "PDF"],
+        horizontal=True,
+        key="download_file_type",
     )
 
+    file_data, file_name, mime_type = build_download_file(
+        content=st.session_state.idea_board,
+        file_type=file_type,
+        base_name=st.session_state.final_file_name,
+    )
+
+    st.download_button(
+        label=f"⬇️ Download as {file_type}",
+        data=file_data,
+        file_name=file_name,
+        mime=mime_type,
+    )

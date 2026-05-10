@@ -36,7 +36,24 @@ class MsgReq(BaseModel):
 
 def make_initial_state(thread_id: str, subject: str, essay_topic: str) -> State:
     return {
-        "idea_board": "",
+        "idea_board": """Impact of AI on Education
+The use of AI has both positive and negative impacts on education.
+Positive Impacts of AI on Education
+Democratized Execution: AI acts as a "Technical Equalizer," enabling students with ideas but lacking certain skills (e.g., drawing) to produce creative works like films or comics, shifting value from manual labor to vision and curation.
+Rapid Prototyping: Students can test many ideas quickly (e.g., 100 ideas in 10 minutes), reducing fear of failure and encouraging a culture of experimentation and "failing forward."
+The "Creative Sparring" Partner: AI acts as a mirror, helping students learn to critique and refine their work rather than just accept it, sharpening their logic and ability to defend creative choices.
+The "Socratic" Shift: AI facilitates learning through dialogue and interrogation rather than simple fact retrieval, helping students build deeper mental models beyond memorization.
+Negative Impacts of AI on Education
+The "Path of Least Resistance":
+Creative Laziness: AI generating "good enough" drafts quickly may cause students to stop striving for excellence, bypassing the struggle where original insights are born.
+Skill Atrophy: Dependence on AI for structure and phrasing can weaken students' abilities to organize thoughts and master grammar and logic.
+Confidence & Imposter Syndrome:
+The Perfection Gap: Comparing raw student work to polished AI output may lower students' confidence in their own voice.
+Hollow Ownership: Lack of struggle in creating ideas can erode emotional connection and pride in their work.
+Algorithmic Homogenization:
+The "Average" Trap: AI's tendency to predict the most likely next element based on data may pull students toward average ideas, discouraging radical or unconventional creativity.
+Loss of Critical Inquiry:
+Acceptance Bias: Students may treat AI as infallible, leading to passive consumption rather than critical questioning necessary for deep learning.""",
         "structures": [],
         "subject": subject,
         "turn_user_messages": [],

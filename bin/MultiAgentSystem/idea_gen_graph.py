@@ -171,6 +171,7 @@ class IdeationSubgraph:
         g.add_node("cleanup_2", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
         g.add_node("move_on", self.check_move_on)
+        g.add_node("move_on_2", self.check_move_on)
         
         #edges
         g.add_edge(START, "facilitator")
@@ -207,7 +208,17 @@ class IdeationSubgraph:
         )
         g.add_edge("idea_generation", "user_reply_2")
         g.add_edge("idea_expansion", "user_reply_2")
-        g.add_edge("user_reply_2", "structure_2")
+        g.add_edge("user_reply_2", "move_on_2")
+
+        #check for manual stop condition
+        g.add_conditional_edges(
+            "move_on_2",
+            lambda s: s["facilitation_done"],
+            {
+                True: END,
+                False: "structure_2",   
+            })
+        
         g.add_edge("structure_2", "cleanup_2")
         g.add_conditional_edges(
             "cleanup_2",
