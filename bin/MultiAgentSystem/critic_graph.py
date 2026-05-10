@@ -102,7 +102,7 @@ class CriticSubgraph:
         latest_message = str(messages[-1]).lower().strip()
     
         move_words = {"move on", "go", "skip", "proceed", "continue"}
-        target_words = {"structuring phase", "structuring", "structure"}
+        target_words = {"structuring phase", "structuring", "structure", "next phase", "next"}
     
         wants_move = any(word in latest_message for word in move_words)
         wants_target = any(word in latest_message for word in target_words)

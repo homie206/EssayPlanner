@@ -108,7 +108,7 @@ class IdeationSubgraph:
         latest_message = str(messages[-1]).lower().strip()
     
         move_words = {"move on", "go", "skip", "proceed", "continue", "move"}
-        target_words = {"critic phase", "criticising", "criticise"}
+        target_words = {"critic phase", "criticising", "criticise", "next phase", "next"}
     
         wants_move = any(word in latest_message for word in move_words)
         wants_target = any(word in latest_message for word in target_words)
