@@ -126,7 +126,7 @@ class StructuringSubgraph:
         message = (
             "Great — your essay plan is now complete.\n\n"
             "Your structured essay plan is ready to be downloaded:\n\n"
-            "You can now use this to start writing your essay."
+            "Use it to start writing your essay."
         )
 
         return {
@@ -194,7 +194,7 @@ class StructuringSubgraph:
         iteration = state.get("structuring_iteration", 0)
 
         # First: stop condition
-        if iteration >= 4:
+        if iteration >= 4 and iteration % 4 == 0:
             return "stop"
 
         # Then: intro vs normal
@@ -239,6 +239,7 @@ class StructuringSubgraph:
         g.add_node("ask_stop", self._ask_stop)
         g.add_node("final_output", self._final_output_node)
         g.add_node("move_on", self.check_move_on)
+        g.add_node("move_on_2", self.check_move_on)
 
         g.add_edge(START, "facilitator")
 
@@ -278,8 +279,17 @@ class StructuringSubgraph:
       
         g.add_edge("coach", "user2")
         g.add_edge("argument_flow", "user2")
-        #g.add_edge("user2", "")
-        g.add_edge("user2", "idea_structurer")
+        g.add_edge("user2", "move_on_2")
+        
+        #check for manual exit
+        g.add_conditional_edges(
+            "move_on",
+            lambda s: s["structuring_done"],
+            {
+                True: "final_output",
+                False: "idea_structurer",   
+            })
+        
         g.add_edge("idea_structurer", "facilitator")
 
         g.add_conditional_edges(

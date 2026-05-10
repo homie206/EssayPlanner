@@ -148,6 +148,7 @@ class CriticSubgraph:
         g.add_node("cleanup_2", self._cleanup_messages)
         g.add_node("stop_condition", self.stop_condition)
         g.add_node("move_on", self.check_move_on)
+        g.add_node("move_on_2", self.check_move_on)
 
         # ---- edges ----
         g.add_conditional_edges(
@@ -161,6 +162,7 @@ class CriticSubgraph:
         g.add_edge("cleanup_1", "facilitator")
         g.add_edge("facilitator", "user_reply_1")
         g.add_edge("user_reply_1", "move_on")
+
         g.add_conditional_edges(
             "move_on",
             lambda s: s["criticising_done"],
@@ -168,8 +170,18 @@ class CriticSubgraph:
                 True: END,
                 False: "critic",   
             })
+        
         g.add_edge("critic", "user_reply_2")
-        g.add_edge("user_reply_2", "structure")
+        g.add_edge("user_reply_2", "move_on_2")
+
+        g.add_conditional_edges(
+            "move_on_2",
+            lambda s: s["criticising_done"],
+            {
+                True: END,
+                False: "structure",   
+            })
+        
         g.add_edge("structure", "cleanup_2")
         g.add_edge("cleanup_2", "iterator")
         g.add_conditional_edges(
