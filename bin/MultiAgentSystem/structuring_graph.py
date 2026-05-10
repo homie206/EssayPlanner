@@ -283,7 +283,7 @@ class StructuringSubgraph:
         
         #check for manual exit
         g.add_conditional_edges(
-            "move_on",
+            "move_on_2",
             lambda s: s["structuring_done"],
             {
                 True: "final_output",

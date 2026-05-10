@@ -229,6 +229,72 @@ def process_events(resp: dict):
         st.session_state.show_yes_no = False
 
 
+def render_homepage_guidelines():
+    """Show homepage guidance explaining how to use the system."""
+    with st.expander("Guidelines On Using The System", expanded=False):
+        st.markdown(
+            """
+            This AI system works best when you treat the agents like a brainstorming team.
+            The more specific and informative you are, the better the final essay plan will be.
+
+            ### Guidelines for using the system
+            
+            - This system will help you brainstorm ideas to prepare you for your actual writing task.
+            - The agents will not generate content for you. You create your own ideas, they are there to guide you.
+            - Give detailed answers instead of short one-word replies.
+            - Explain your ideas, even if they are rough or unfinished.
+            - Share your opinion, examples, concerns, or possible arguments.
+            - Tell the agents if you disagree with something or want a different direction.
+            - When the agents ask questions, try to explain your reasoning rather than only saying yes or no.
+            - Use the brainstorm to develop your own ideas, not just to wait for a finished answer.
+            
+
+            ### Sub-phases of the system
+
+            This system consists of 3 main sub phases of brainstorming.
+
+            **1. Idea exploration**  
+            The agents ask questions to help you explore and expand on possible points, examples, and different angles.
+            You will be talking with the Idea Coach and the Subject Specialist at this stage.
+
+            **2. Critical review**  
+            The critic challenges weak points, unclear reasoning, missing evidence, or one-sided arguments.
+            You will be talking with the Critic at this stage.
+
+            **3. Argument organisation**  
+            The system helps arrange your ideas into a clearer essay structure with a logical flow.
+            You will be talking with the Structure Coach and the Argument Flow Coach at this stage.
+
+            ### What the main agents do
+
+            **Idea Coach**  
+            Helps you generate and clarify your initial ideas. This agent is useful when you are unsure what to say or need help developing rough thoughts.
+
+            **Subject Specialist**  
+            Helps to expand the ideas with content connected to the subject area. This agent can suggest more relevant concepts, examples, and academic angles.
+
+            **Critic**  
+            Challenges your ideas and points out weaknesses. This helps make your essay plan stronger by identifying vague claims, missing explanations, or unsupported arguments.
+
+            **Structure coach**  
+            Turns scattered ideas into clearer sections. This agent helps organise your ideas into a structured essay plan.
+
+            **Argument Flow Coach**  
+            Focuses on the order and logic of your essay. This agent helps make sure your introduction, main points, counterpoints, and conclusion connect properly.
+
+            ### Remember
+
+            - Only certain agents will talk to you at a phase. This makes sure you can effectively interact with all agents and systematically develop your essay plan.
+            - You can skip to the next phase by saying : "Lets move on to the next phase" or something similar.
+            - Once you exit a phase you can't re-enter it.
+            - The system is not just asking questions for no reason. Each question is meant to help you build a stronger, clearer, and more organised essay plan.
+            - SO ARE YOU READY TO GET BRAINSTORMING? GOOD LUCK !!
+
+
+            """
+        )
+
+
 # ----------------------------
 # File export helpers
 # ----------------------------
@@ -509,6 +575,8 @@ for msg in st.session_state.chat:
 
 if st.session_state.thread_id is None:
     st.subheader("Start a new session")
+
+    render_homepage_guidelines()
 
     subject = st.text_input("Subject", value="Education")
     essay_topic = st.text_input("Essay topic", value="AI in education and creativity")
