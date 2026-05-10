@@ -198,7 +198,7 @@ def process_events(resp: dict):
 
             # Force final message to come from facilitator
             if key == "final_message":
-                role = "facilitator_structuring" 
+                role = "facilitator_structuring"
 
             st.session_state.chat.append(
                 {"role": role, "content": str(value)}
@@ -352,7 +352,7 @@ if st.session_state.thread_id is None:
 # Active session flow
 # ----------------------------
 
-# Show Yes/No buttons only for prompts marked with <<YES_NO>>
+# Show Yes/No buttons only for prompts marked with [YES_NO]
 if st.session_state.show_yes_no and st.session_state.interrupt_prompt:
     st.info(clean_interrupt_prompt(st.session_state.interrupt_prompt))
 
@@ -368,7 +368,18 @@ if st.session_state.show_yes_no and st.session_state.interrupt_prompt:
         st.session_state.interrupt_prompt = None
         send_user_message("no", show_in_chat=False)
 
+    # IMPORTANT FIX:
+    # Keep the pinned chat input rendered even when Yes/No buttons appear.
+    # Without this, st.stop() prevents the normal bottom chat input from rendering,
+    # which changes the page layout and can make the view jump upward.
+    st.chat_input(
+        "Choose Yes or No above",
+        disabled=True,
+        key="yes_no_disabled_chat_input",
+    )
+
     st.stop()
+
 
 # For other interrupts, show the prompt and keep normal text input available
 if (
@@ -378,7 +389,8 @@ if (
 ):
     st.info(clean_interrupt_prompt(st.session_state.interrupt_prompt))
 
-user_text = st.chat_input("Type your reply here")
+
+user_text = st.chat_input("Type your reply here", key="normal_chat_input")
 
 if user_text:
     send_user_message(user_text)
@@ -397,5 +409,6 @@ if st.session_state.show_download and st.session_state.idea_board:
     st.download_button(
         label="⬇️ Download Essay Plan",
         data=st.session_state.idea_board,
-        file_name=st.session_state.final_file_name
+        file_name=st.session_state.final_file_name,
     )
+
