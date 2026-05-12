@@ -127,7 +127,7 @@ class CriticSubgraph:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         # draw_mermaid_png returns bytes; passing output_file_path also saves the file.
-        img_bytes = self.graph.get_graph().draw_mermaid_png(output_file_path=str(path))
+        img_bytes = self.graph.get_graph().draw_mermaid_png(draw_method=MermaidDrawMethod.PYPPETEER, output_file_path=str(path))
         if img_bytes and not path.exists():
             path.write_bytes(img_bytes)
 

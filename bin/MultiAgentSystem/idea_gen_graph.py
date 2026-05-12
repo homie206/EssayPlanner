@@ -4,7 +4,7 @@ from langgraph.graph import START, END, StateGraph
 from .llm_connector import chat
 from .state_schema import State
 from pathlib import Path
-
+from langchain_core.runnables.graph import MermaidDrawMethod
 
 class IdeationSubgraph:
     """
@@ -37,7 +37,12 @@ class IdeationSubgraph:
     def _user_turn_node_1(self, state: State):
         user_reply = interrupt("Your turn:")
         messages = state.get("turn_user_messages", [])
-        messages.append(user_reply)
+
+        #append only first two messages 
+        if state["ideation_iteration"] == 1:
+          messages.append(user_reply)
+        
+        print(messages)
         return {"latest_user_message": user_reply, "turn_user_messages": messages}
     
     def _user_turn_node_2(self, state: State):
@@ -46,7 +51,6 @@ class IdeationSubgraph:
         messages.append(user_reply)
         return {"latest_user_message": user_reply, "turn_user_messages": messages}
     
-
     def _routing_node(self, state: State) -> dict:
         reply = chat(
             self.router_agent,
@@ -146,7 +150,7 @@ class IdeationSubgraph:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         # draw_mermaid_png returns bytes; passing output_file_path also saves the file.
-        img_bytes = self.graph.get_graph().draw_mermaid_png(output_file_path=str(path))
+        img_bytes = self.graph.get_graph().draw_mermaid_png(draw_method=MermaidDrawMethod.PYPPETEER, output_file_path=str(path))
         if img_bytes and not path.exists():
             # Fallback: write bytes ourselves if your version doesn't auto-save
             path.write_bytes(img_bytes)

@@ -2,6 +2,8 @@
 from .prompts import build_prompt_for_agent
 from .tools import Tools
 from .idea_gen_graph import IdeationSubgraph
+from .critic_graph import CriticSubgraph
+from .structuring_graph import StructuringSubgraph
 from .agents import create_all_agents
 from .state_schema import State
 import uuid 
@@ -73,13 +75,13 @@ Things I am not fully sure about yet:
 }
 #create agents and the MAS graph
 facilitator_ideation, idea_generator, subject_specialist, idea_structurer, critic, router, facilitator_agent_critic, structuring_coach, argument_flow, facilitator_structuring, structuring_router, structuring_idea_structurer  = create_all_agents(initial_state)
-subgraph = IdeationSubgraph(
+subgraph = StructuringSubgraph(
     facilitator_agent=facilitator_ideation,
+    structuring_coach_agent=structuring_coach,
+    argument_flow_agent=argument_flow,
     router_agent=router,
-    idea_generator_agent=idea_generator,
-    subject_specialist_agent=subject_specialist,
-    idea_structurer_agent=idea_structurer,
+    structuring_idea_structurer_agent=structuring_idea_structurer, 
 )
 
-png_path = subgraph.save_mermaid_png("graphs/ideation_subgraph.png")
+png_path = subgraph.save_mermaid_png("graphs/structuring_subgraph.png")
 print("Saved graph to:", png_path)
