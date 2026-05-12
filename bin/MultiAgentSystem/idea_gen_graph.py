@@ -38,7 +38,8 @@ class IdeationSubgraph:
         user_reply = interrupt("Your turn:")
         messages = state.get("turn_user_messages", [])
 
-        #append only first two messages 
+        #append only first message as all the other replies in this node 
+        #arent content related
         if state["ideation_iteration"] == 1:
           messages.append(user_reply)
         
