@@ -1,49 +1,24 @@
-# AI4Ed Turing Project
+# EssayPlanner
 
-## Multi-Agent Systems for Multi-Party Human-AI Interaction
+## A Multi-Agent Assistant for Student-Centred Academic Writing Planning
 
-A research project investigating how multi-agent systems can enhance essay writing through collaborative AI interactions.
-
-### Team Members
-- Alan O'Connell
-- Don Rasula Dhakshaka Atapattu
-- Raymon JS Narwal
-
-**Supervisor:** Zheng Yuan
+EssayPlanner is a multi-agent system that supports students in the pre-writing and planning stages of academic essays. Through collaborative interaction with multiple AI agents, students can brainstorm ideas, explore diverse perspectives, and structure their arguments before they start writing.
 
 ### Project Overview
 
-This project develops a prototype system with three interconnected modules to support student essay writing:
+EssayPlanner provides interconnected modules to support student-centred academic writing planning:
 
 1. **Planning Module** - Pre-writing discussions with multiple AI agents (facilitator, challenger, supporter) to help students brainstorm ideas and explore diverse perspectives
-2. **Assessment Module** - Automated band-like scoring aligned with writing rubrics (IELTS, TOEFL)
-3. **Feedback Module** - Surface-level corrections and deeper guidance on coherence, organization, and argument quality
+2. **Structuring Module** - Guidance on organising ideas into a coherent essay structure and argument flow
+3. **Assessment Module** - Automated band-like scoring aligned with writing rubrics (IELTS, TOEFL)
+4. **Feedback Module** - Surface-level corrections and deeper guidance on coherence, organization, and argument quality
 
 ### Key Features
 
-- Multi-agent collaboration with different AI personas representing various cultural and linguistic backgrounds
+- Multi-agent collaboration with different AI personas representing various perspectives
 - Critic agents for evaluation and feedback
-- Integration with existing assessment and feedback systems
 - Flexible, expandable design for future enhancements
-
-### Technical Approach
-
-- Prioritizing local LLM models (privacy concerns, especially for minors)
 - Flexible implementation allowing easy model switching
-- Limited OpenAI credits ($2000) available for testing
-
-### Project Timeline
-
-**Semester 1 (Weeks 1-12)**
-- Week 1-3: Team forming and project setup
-- Week 4-10: Research and development
-- Week 11: Interim presentation
-- Week 12: Interim report
-
-**Semester 2 (Weeks 1-12)**
-- Week 1-10: Continued development
-- Week 11: Final presentation
-- Week 12: Final report
 
 ### Getting Started
 
@@ -58,7 +33,7 @@ This project develops a prototype system with three interconnected modules to su
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd AI4ED-turing-project
+cd EssayPlanner
 ```
 
 2. Install dependencies using UV:
@@ -72,7 +47,7 @@ source .venv/bin/activate
 ```
 
 4. Set up environment variables:
-Create a `.env` file in the project root (get from folder in google drive):
+Create a `.env` file in the project root:
 ```bash
 OPENAI_API_KEY=your_api_key_here
 ```
@@ -113,28 +88,27 @@ uv run python -m bin.MultiAgentSystem.app
 
 This runs a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
 
-**Option 4 : (MOST RECENT) SERVER AND FRONTEND**
+**Option 3: Server and Frontend**
 
-first from project root folder run:
+First, from the project root folder run:
 
 ```bash
 uvicorn bin.MultiAgentSystem.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-now inorder to run the front end naviagate to the bin/MultiAgentSystem Folder
+To run the front end, navigate to the `bin/MultiAgentSystem` folder:
 ```bash
 cd bin/MultiAgentSystem
 ```
 
-After run the front end using :
+Then run the front end using:
 ```bash
 streamlit run front_end.py
 ```
 
-
 Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
-**Option 5: Docker (recommended for deployment)**
+**Option 4: Docker (recommended for deployment)**
 
 Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
 
@@ -173,21 +147,10 @@ docker compose down
 │       ├── display_renderer.py    # Rich panels and formatting
 │       ├── app.py                 # Rich UI entry point
 │       └── README.md              # Rich UI documentation
-├── main.py                        # Project entry point
 ├── pyproject.toml                 # Project dependencies and metadata
-└── readme.md                      # This file
+└── README.md                      # This file
 ```
-
-### Resources
-
-- **Module:** COM4520 Turing Research Project
-- **Academic Year:** 2025/2026
-- **University:** University of Sheffield, Computer Science Department
 
 ### Ethics
 
-This project will follow the University of Sheffield's Ethics Review Procedure with appropriate consent forms and data protection measures.
-
----
-
-*This is an early-stage research project. Documentation and features will be updated as development progresses.*
+This project follows the University's Ethics Review Procedure with appropriate consent forms and data protection measures.
