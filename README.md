@@ -33,7 +33,7 @@ EssayPlanner provides interconnected modules to support student-centred academic
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd EssayPlanner
+cd AI4ED-turing-project
 ```
 
 2. Install dependencies using UV:
@@ -47,7 +47,7 @@ source .venv/bin/activate
 ```
 
 4. Set up environment variables:
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (get from folder in google drive):
 ```bash
 OPENAI_API_KEY=your_api_key_here
 ```
@@ -88,27 +88,28 @@ uv run python -m bin.MultiAgentSystem.app
 
 This runs a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
 
-**Option 3: Server and Frontend**
+**Option 4 : (MOST RECENT) SERVER AND FRONTEND**
 
-First, from the project root folder run:
+first from project root folder run:
 
 ```bash
 uvicorn bin.MultiAgentSystem.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-To run the front end, navigate to the `bin/MultiAgentSystem` folder:
+now inorder to run the front end naviagate to the bin/MultiAgentSystem Folder
 ```bash
 cd bin/MultiAgentSystem
 ```
 
-Then run the front end using:
+After run the front end using :
 ```bash
 streamlit run front_end.py
 ```
 
+
 Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
-**Option 4: Docker (recommended for deployment)**
+**Option 5: Docker (recommended for deployment)**
 
 Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
 
@@ -147,8 +148,9 @@ docker compose down
 │       ├── display_renderer.py    # Rich panels and formatting
 │       ├── app.py                 # Rich UI entry point
 │       └── README.md              # Rich UI documentation
+├── main.py                        # Project entry point
 ├── pyproject.toml                 # Project dependencies and metadata
-└── README.md                      # This file
+└── readme.md                      # This file
 ```
 
 ### Ethics
