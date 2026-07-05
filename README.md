@@ -1,4 +1,4 @@
-# EssayPlanner
+# EssayPlanner: A Multi-Agent Assistant for Student-Centred Academic Writing Planning
 
 ## A Multi-Agent Assistant for Student-Centred Academic Writing Planning
 
