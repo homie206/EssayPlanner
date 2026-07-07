@@ -33,7 +33,7 @@ EssayPlanner provides interconnected modules to support student-centred academic
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd AI4ED-turing-project
+cd EssayPlanner
 ```
 
 2. Install dependencies using UV:
@@ -47,7 +47,8 @@ source .venv/bin/activate
 ```
 
 4. Set up environment variables:
-Create a `.env` file in the project root (get from folder in google drive):
+Create a `.env` file in the project root containing the necessary API keys.
+YOu can refer to the example environment files on what API Keys you need to create your own:
 ```bash
 OPENAI_API_KEY=your_api_key_here
 ```
@@ -55,40 +56,7 @@ OPENAI_API_KEY=your_api_key_here
 
 #### Running the Application
 
-You can choose between two user interfaces:
-
-**Option 1: Rich Console UI (Recommended)**
-
-Modern, interactive terminal interface with colored panels, spinners, and conversation history:
-
-```bash
-# Interactive mode (will prompt for subject)
-uv run python -m bin.RichUI.app
-
-# With subject specified
-uv run python -m bin.RichUI.app --subject "Social media and mental health"
-```
-
-Features:
-- Live conversation display with color-coded Rich panels
-- Typing indicators/spinners during LLM processing
-- Conversation history scrollback (last 5 turns)
-- Multi-line input support (use `>>>` to finish)
-- Commands: `/help`, `/clear`, `/quit`
-
-See `bin/RichUI/README.md` for detailed usage guide.
-
-**Option 2: Basic CLI**
-
-Simple command-line interface (original):
-
-```bash
-uv run python -m bin.MultiAgentSystem.app
-```
-
-This runs a demo conversation where a facilitator agent helps a student brainstorm an essay about social media's impact on mental health.
-
-**Option 4 : (MOST RECENT) SERVER AND FRONTEND**
+**Option 1 : SERVER AND FRONTEND**
 
 first from project root folder run:
 
@@ -96,7 +64,7 @@ first from project root folder run:
 uvicorn bin.MultiAgentSystem.app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-now inorder to run the front end naviagate to the bin/MultiAgentSystem Folder
+now inorder to run the front end open another terminal and naviagate to the bin/MultiAgentSystem Folder
 ```bash
 cd bin/MultiAgentSystem
 ```
@@ -106,10 +74,10 @@ After run the front end using :
 streamlit run front_end.py
 ```
 
-
 Now you should be able to see the chat interface loaded up if you follow the URL into your browser.
 
-**Option 5: Docker (recommended for deployment)**
+
+**Option 2: Docker (recommended for deployment)**
 
 Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
 
@@ -152,7 +120,3 @@ docker compose down
 ├── pyproject.toml                 # Project dependencies and metadata
 └── readme.md                      # This file
 ```
-
-### Ethics
-
-This project follows the University's Ethics Review Procedure with appropriate consent forms and data protection measures.
