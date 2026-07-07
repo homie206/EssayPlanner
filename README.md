@@ -120,3 +120,12 @@ docker compose down
 ├── pyproject.toml                 # Project dependencies and metadata
 └── readme.md                      # This file
 ```
+## License
+
+This project is licensed under the PolyForm Noncommercial License 1.0.0.
+
+The software may be used, modified and redistributed for non-commercial
+purposes in accordance with the LICENSE file.
+
+Commercial use requires prior written permission from all original
+project contributors.
