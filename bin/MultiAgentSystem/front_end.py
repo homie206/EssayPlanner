@@ -514,7 +514,7 @@ if "final_file_name" not in st.session_state:
 # UI
 # ----------------------------
 
-st.title("AI 4 ED")
+st.title("EssayPlanner")
 
 with st.sidebar:
     st.subheader("Server")
