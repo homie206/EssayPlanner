@@ -146,7 +146,7 @@ class StructuringSubgraph:
         ans = interrupt(
             stop_statement
             + 
-            "Here is your idea board:\n\n"
+            "\n\nHere is your idea board:\n\n"
             f"{idea_board}\n\n"
             "\n\n[YES_NO] Are you happy with your final idea board?"
         )
@@ -167,19 +167,37 @@ class StructuringSubgraph:
     
         latest_message = str(messages[-1]).lower().strip()
     
-        move_words = {"skip", "finish", "ready to write", "stop", "I think I am ready to start", "I had enough"}
-        target_words = {"structuring phase", "structuring", "structure", "brainstorming", " the essay", "writing"}
+        exit_phrases = {
+            "done",
+            "finish",
+            "finished",
+            "stop",
+            "move on",
+            "ready to write",
+            "start writing",
+            "start the essay",
+            "write the essay",
+            "essay plan",
+            "idea board",
+            "final plan",
+            "outline",
+            "enough",
+            "that's enough",
+            "good enough",
+        }
     
-        wants_move = any(word in latest_message for word in move_words)
-        wants_target = any(word in latest_message for word in target_words)
+        wants_move = any(
+            phrase in latest_message
+            for phrase in exit_phrases
+        )
     
-        if not (wants_move and wants_target):
+        if not wants_move:
             return {"structuring_done": False}
         
         ans = interrupt(
             stop_statement
             + 
-            "Here is your idea board:\n\n"
+            "\n\nHere is your idea board:\n\n"
             f"{idea_board}\n\n"
             "\n\n[YES_NO] Are you happy with your final idea board?"
         )
