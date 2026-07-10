@@ -4,6 +4,8 @@
 
 EssayPlanner is a multi-agent system that supports students in the pre-writing and planning stages of academic essays. Through collaborative interaction with multiple AI agents, students can brainstorm ideas, explore diverse perspectives, and structure their arguments before they start writing.
 
+A demonstration video is available at https://youtu.be/S0tUqq1YfLc
+
 ### Project Overview
 
 EssayPlanner provides interconnected modules to support student-centred academic writing planning:
