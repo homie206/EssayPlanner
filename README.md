@@ -124,10 +124,6 @@ docker compose down
 ```
 ## License
 
-This project is licensed under the PolyForm Noncommercial License 1.0.0.
+This project is licensed under the MIT License.
 
-The software may be used, modified and redistributed for non-commercial
-purposes in accordance with the LICENSE file.
-
-Commercial use requires prior written permission from all original
-project contributors.
+We welcome collaboration from researchers, educators, and developers interested in using, adapting, or extending the system. If you would like to discuss potential collaborations or have any questions about the project, please feel free to contact the project team.
