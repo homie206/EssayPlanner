@@ -22,6 +22,7 @@ services:
       timeout: 3s
       retries: 10
       start_period: 15s
+    restart: unless-stopped
 
   frontend:
     build:
@@ -43,6 +44,7 @@ services:
     networks:
       - nginxproxymanager_default
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:
